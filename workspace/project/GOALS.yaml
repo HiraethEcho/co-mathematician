@@ -1,0 +1,11 @@
+language_policy:
+  status: pending_user_choice
+  schema_language: English
+  project_docs_language: ''
+  notes_language: ''
+  review_language: English
+  final_output_language: ''
+research_question:
+  status: onboarding
+  text: ''
+goals: []
