@@ -13,6 +13,11 @@
 </div>
 
 <p align="center">
+  如果这个项目对你有帮助，欢迎为仓库点 Star ⭐
+  <a href="https://github.com/VeryMath/co-mathematician"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/VeryMath/co-mathematician?style=social"></a>
+</p>
+
+<p align="center">
   <img src="assets/co-mathematician-architecture.png" alt="Co-Mathematician 仓库架构" width="940">
 </p>
 

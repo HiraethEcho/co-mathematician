@@ -13,6 +13,11 @@ A repository-backed mathematical research workspace for coding agents.
 </div>
 
 <p align="center">
+  If this project helps your work, please consider giving the repository a Star ⭐
+  <a href="https://github.com/VeryMath/co-mathematician"><img alt="GitHub stars" src="https://img.shields.io/github/stars/VeryMath/co-mathematician?style=social"></a>
+</p>
+
+<p align="center">
   <img src="assets/co-mathematician-architecture.png" alt="Co-Mathematician repository architecture" width="940">
 </p>
 
