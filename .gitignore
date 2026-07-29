@@ -59,7 +59,6 @@ logs/
 tmp/
 temp/
 .cache/
-.co-math.lock
 
 # Local workspace review artifacts
 workspace/project/*_REVIEW.md
@@ -86,3 +85,7 @@ benchmarks/**/outputs/
 benchmarks/**/artifacts/
 results/
 artifacts/
+/uv.lock
+/harness_old
+/flop/project
+/flop

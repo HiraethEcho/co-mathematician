@@ -15,10 +15,7 @@ Review the logical correctness and dependency structure of one workstream report
 - Check whether definitions, assumptions, lemmas, and conclusions match.
 - Identify proof gaps, circular dependencies, overclaims, and missing hypotheses.
 - Verify that uncertainty and failed explorations are explicit.
-- Return decision fields for `co-math submit-review`: `approved`, `severity`,
-  `issue_type`, `comment`, `suggested_fix`, `resolves`, and checked artifact paths.
-- Let the harness add the host-supplied reviewer run ID, timestamp, report hash,
-  and checked artifact hashes; do not invent those trust fields.
+- Return reviewer JSON compatible with `reviewer_output_schema.json`.
 
 ## Boundaries
 
@@ -30,7 +27,7 @@ Review the logical correctness and dependency structure of one workstream report
 
 ## Required Artifacts
 
-- A schema-valid review record persisted under `reviews/` by `co-math submit-review`.
+- Reviewer JSON under the workstream `reviews/` directory.
 - Blocking issues when definitions, dependencies, or proof steps are unclear.
 
 ## Adapter Notes
@@ -38,3 +35,4 @@ Review the logical correctness and dependency structure of one workstream report
 - Codex adapter: `.codex/agents/logic_reviewer.toml`.
 - Claude Code adapter: `.claude/agents/logic_reviewer.md`.
 - Cursor adapter: route through `.cursor/rules/co-mathematician-roles.mdc`.
+

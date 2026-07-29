@@ -7,13 +7,8 @@
     "severity",
     "issue_type",
     "reviewer",
-    "reviewer_run_id",
-    "reviewed_at",
-    "report_sha256",
     "comment",
-    "suggested_fix",
-    "resolves",
-    "checked_artifacts"
+    "suggested_fix"
   ],
   "properties": {
     "approved": {
@@ -38,18 +33,6 @@
       "type": "string",
       "minLength": 1
     },
-    "reviewer_run_id": {
-      "type": "string",
-      "minLength": 1
-    },
-    "reviewed_at": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "report_sha256": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
-    },
     "comment": {
       "type": "string",
       "minLength": 1
@@ -57,24 +40,21 @@
     "suggested_fix": {
       "type": "string"
     },
+    "resolved": {
+      "type": "boolean",
+      "default": false
+    },
     "resolves": {
       "type": "array",
       "items": {
-        "type": "string",
-        "pattern": "^[^/\\\\]+\\.json$"
+        "type": "string"
       },
       "default": []
     },
     "checked_artifacts": {
       "type": "array",
       "items": {
-        "type": "object",
-        "required": ["path", "sha256"],
-        "properties": {
-          "path": {"type": "string", "minLength": 1},
-          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
-        },
-        "additionalProperties": false
+        "type": "string"
       },
       "default": []
     }

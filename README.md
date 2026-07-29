@@ -1,170 +1,131 @@
-<div align="center">
-
 # Co-Mathematician
 
-A repository-backed mathematical research workspace for coding agents.
+面向 coding agent 的仓库化数学研究工作区。 fork from [VeryMath](https://github.com/VeryMath/co-mathematician)
 
-[中文说明](README.zh-CN.md) · [Contributors](CONTRIBUTORS.md) · [Setup](#install-and-open-the-workspace) · [First interaction](#first-interaction) · [Updates](#version-updates) · [Architecture](#what-this-workspace-does)
+[原贡献者](CONTRIBUTORS.md) · [安装](#安装并打开工作区) · [第一次交互](#第一次交互) · [架构](#这个工作区能做什么)
 
-![version](https://img.shields.io/badge/version-0.2.0-blue)
+![version](https://img.shields.io/badge/version-0.1.0-blue)
 ![workspace](https://img.shields.io/badge/workspace-research-2ea44f)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
-</div>
+Co-Mathematician 是一个轻量级的数学研究工作区。它的用法不是启动一个新的
+multi-agent platform，而是把一个能读写仓库的 coding agent 组织成一个可追踪、
+可复核、可接续的数学研究环境。Codex、Claude Code、Cursor、OpenCode 等工具
+只是同一套 workspace protocol 的 adapters。
 
-<p align="center">
-  If this project helps your work, please consider giving the repository a Star ⭐
-  <a href="https://github.com/VeryMath/co-mathematician"><img alt="GitHub stars" src="https://img.shields.io/github/stars/VeryMath/co-mathematician?style=social"></a>
-</p>
-
-<p align="center">
-  <img src="assets/co-mathematician-architecture.png" alt="Co-Mathematician repository architecture" width="940">
-</p>
-
-Co-Mathematician is a lightweight research workspace for using a repository-aware
-coding agent as an AI co-mathematician. It is designed to be cloned, opened in a
-repository-aware coding agent, and used as a stateful mathematical research
-environment. Codex, Claude Code, Cursor, OpenCode, and similar tools are
-adapters to the same workspace protocol.
-
-The core formula is:
+核心公式是：
 
 ```text
 coding agent + repo filesystem + gates + reviewer loop = research workspace
 ```
 
-This project is inspired by public design principles from Google DeepMind's
-[AI Co-Mathematician paper](https://arxiv.org/abs/2605.06651), but it is **not**
-a reproduction of their system.
+本项目受 Google DeepMind
+[AI Co-Mathematician 论文](https://arxiv.org/abs/2605.06651)中的公开设计原则启发，
+但**不是**对其系统的复现。
 
-## What This Workspace Does
+## 这个工作区能做什么
 
-Co-Mathematician turns a math research conversation into a file-backed project:
+Co-Mathematician 会把一次数学研究对话变成一个文件化项目：
 
-- the coding agent main thread acts as the Project Coordinator
-- `workspace/project/` stores the research question, goals, status, and messages
-- `workspace/workstreams/` stores proof, computation, literature, and review work
-- reviewer agents or separate reviewer sessions check reports before completion
-- completion freezes a content-addressed reviewed report and review-evidence bundle
-- `workspace/final/generated_draft.md` is rendered from reviewed snapshots
-- a synthesis agent may turn that draft into `workspace/final/working_paper.md`
+- coding agent 主线程扮演 Project Coordinator
+- `workspace/project/` 保存研究问题、目标、状态和消息
+- `workspace/workstreams/` 保存证明、计算、文献、审查等分支工作
+- reviewer agents 或独立 reviewer sessions 在完成前审查 report
+- `workspace/final/working_paper.md` 只从通过审查的 reports 渲染
 
-The Python harness does not run agents. It only initializes files, appends
-messages, records lifecycle transitions, creates approved workstreams, validates
-report-bound reviews, checks gates, and renders a generated draft.
+Python harness 不运行 agents。它只负责初始化文件、追加 messages、创建已批准
+workstreams、检查 gates、渲染 final working paper。
 
-### Trust boundary
+## 安装并打开工作区
 
-The harness protects cooperative multi-agent workflows against stale state,
-partial writes, path escape, and drift in reports, review records, and explicitly
-declared checked artifacts. Its completion manifest binds the goal approval
-event, author run, reviewed report, review set, and declared checked artifacts by
-SHA-256. It is not an authorization system for a hostile process
-that already has unrestricted repository write access. Production adapters
-should supply host-issued actor and run identities rather than treating CLI
-strings as cryptographic identity evidence.
+推荐方式是 AI 自动完成 workspace setup；你也可以手动安装。
 
-## Version Updates
+### AI 自动 workspace setup
 
-### 0.2.0 (2026-07-11)
-
-- hardened `approve-goal`, `submit-review`, and `complete-workstream` into
-  explicit lifecycle transitions with schema checks, run IDs, report SHA-256
-  binding, and completion manifests
-- added workspace locking, atomic writes, ID validation, and path containment
-  checks for concurrent workstream creation and shared state updates
-- split final rendering into reviewed `generated_draft.md` snapshots and a
-  synthesis-owned `working_paper.md`
-- added canonical `workstream_coordinator` and `literature_researcher` roles
-  with Codex, Claude Code, and Cursor adapters
-- documented the cooperative trust boundary and review-time checked-artifact hashing
-
-### 0.1.0
-
-- initial public workspace protocol with project files, approved goals,
-  workstreams, reviewer gates, and platform adapters
-
-## Install And Open The Workspace
-
-The recommended path is AI-assisted workspace setup. You can also set it up
-manually.
-
-### AI-Assisted Workspace Setup
-
-If your coding agent can run shell commands, start with:
+如果你的 coding agent 可以运行 shell 命令，可以先这样说：
 
 ```text
-Please set up Co-Mathematician for me.
+请帮我设置 Co-Mathematician。
 
-Repository: https://github.com/VeryMath/co-mathematician.git
-Branch: main
+仓库：https://github.com/VeryMath/co-mathematician.git
+分支：main
 
-Steps:
-1. Clone or update the repository locally.
-2. Open it as the current workspace.
-3. Read README.md, AGENTS.md, and the workspace protocol files.
-4. Install the local harness and initialize `workspace/`.
-5. Start Co-Mathematician onboarding.
-6. Do not start any mathematical workstream yet.
+请执行：
+1. 本地 clone 或更新仓库。
+2. 把它作为当前工作区打开。
+3. 读取 README.md、AGENTS.md 和 workspace protocol 文件。
+4. 安装本地 harness，并初始化 `workspace/`。
+5. 开始 Co-Mathematician onboarding。
+6. 不要启动任何数学 workstream。
 ```
 
-### Manual setup
+### 手动安装
 
-Clone the repository:
+clone 仓库：
 
 ```bash
 git clone https://github.com/VeryMath/co-mathematician.git
 cd co-mathematician
 ```
 
-Install the local harness:
+安装本地 harness：
 
 ```bash
 python3 -m pip install -e ".[dev]"
 co-math --help
 ```
 
-Initialize the workspace files:
+或使用`uv`
+
+```
+uv venv                      # 创建 .venv 虚拟环境
+source .venv/bin/activate    # 激活（Linux/macOS）
+uv pip install -e ".[dev]"   # 此时会安装到 .venv 中
+co-math --help               # 正常执行
+```
+
+初始化 workspace 文件：
 
 ```bash
 co-math init --workspace workspace
 ```
 
-Then open this folder in your coding agent.
 
-Suggested options:
+然后用你的 coding agent 打开这个文件夹。
 
-- **Any repository-aware coding agent**: read `AGENTS.md`,
-  `.agents/skills/co-mathematician/SKILL.md`, and `agents/roles/`.
-- **Codex adapter**: also use `.codex/config.toml` and `.codex/agents/*.toml`.
-- **Claude Code**: open this repository and let Claude Code read `CLAUDE.md`,
-  `AGENTS.md`, `agents/roles/`, and `.claude/agents/`.
-- **Cursor**: open this repository and use the rules in `.cursor/rules/`.
-- **OpenCode + DeepSeek or another provider**: configure your model provider
-  first, then open this repository. Never paste API keys into repo files.
+建议方式：
 
-Without installing the package, use:
+- **任意能读写仓库的 coding agent**：读取 `AGENTS.md`、
+  `.agents/skills/co-mathematician/SKILL.md` 和 `agents/roles/`。
+- **Codex adapter**：额外使用 `.codex/config.toml` 和 `.codex/agents/*.toml`。
+- **Claude Code**：打开仓库，让 Claude Code 读取 `CLAUDE.md`、`AGENTS.md`
+  `agents/roles/` 和 `.claude/agents/`。
+- **Cursor**：打开仓库，使用 `.cursor/rules/` 中的项目规则。
+- **OpenCode + DeepSeek 或其他 provider**：先配置好模型 provider，再打开这个仓库。
+  不要把 API key 写入仓库文件。
+
+不安装 package 也可以运行：
 
 ```bash
 PYTHONPATH=. python3 -m harness.co_math.cli --help
 ```
 
-### Project-local skills
+### 项目级 Skills
 
-For AI4Math skill libraries and project-specific research workflows, install
-skills into this repository by default:
+为了兼容 AI4Math 的大量 skill libraries 和项目特定研究流程，默认把 skills
+安装或复制到当前仓库：
 
 ```text
 .agents/skills/
 ```
 
-The registry scanner discovers both `.agents/skills/<skill>/SKILL.md` and nested
-layouts such as `.agents/skills/<category>/<skill>/SKILL.md`.
+registry scanner 会发现 `.agents/skills/<skill>/SKILL.md`，也会发现类似
+`.agents/skills/<category>/<skill>/SKILL.md` 的嵌套布局。
 
-Use global skill roots such as `~/.codex/skills` or `~/.agents/skills` only when
-you intentionally want a personal installation shared across projects.
+只有当你明确想要“跨项目共享的个人安装”时，才使用 `~/.codex/skills` 或
+`~/.agents/skills` 这样的全局 skill root。
 
-For example, to bring a local AI4Math skill library into this workspace:
+例如，把本地 AI4Math skill library 放进这个工作区：
 
 ```bash
 mkdir -p .agents/skills
@@ -173,13 +134,12 @@ co-math refresh-skills --workspace workspace
 co-math suggest-skills --workspace workspace --query "Stiefel manifold optimization"
 ```
 
-`suggest-skills` refreshes the project-local registry by default, so newly copied
-skills are visible to the workspace even when the coding agent's native skill
-registry has not reloaded yet. If it suggests a relevant skill, ask the Project
-Coordinator to read that `SKILL.md` before proposing goals or creating a
-workstream.
+`suggest-skills` 默认会先刷新项目级 registry，所以即使 coding agent 的原生 skill
+registry 还没重新加载，新复制进来的 skills 也会被工作区看见。如果它推荐了相关
+skill，就要求 Project Coordinator 在提出 goals 或创建 workstream 前先阅读对应的
+`SKILL.md`。
 
-If the user chooses to let that Skill drive the task, record a handoff:
+如果用户决定让这个 Skill 接管内部任务流程，就记录 handoff：
 
 ```bash
 co-math skill-handoff \
@@ -191,56 +151,54 @@ co-math skill-handoff \
   --skill-path ".agents/skills/optimization-skill/SKILL.md"
 ```
 
-After handoff, follow the domain Skill's workflow for the inner task. Use the
-full goal/workstream/reviewer flow only when the user wants durable research
-output or a final working paper.
+handoff 之后，内部步骤按 domain Skill 自己的流程走。只有当用户希望把任务提升为
+durable research output 或 final working paper 时，才进入完整的
+goal/workstream/reviewer 流程。
 
-## First Interaction
+## 第一次交互
 
-After opening the repository in your coding agent, start with a prompt like:
-
-```text
-I want to start a Co-Mathematician research project with this repository.
-
-Please check the workspace state first, refresh the project-local skill registry,
-and guide me through onboarding.
-Do not start concrete research yet.
-```
-
-The first onboarding choice should be the workspace document language policy:
-
-1. English for all workspace documents.
-2. User language for research notes, English for schemas, gates, and reviews.
-3. User language for all human-readable research documents.
-4. Match each project or conversation.
-
-## Starting A Research Project
-
-Give the agent your problem context only after onboarding starts:
+在 coding agent 中打开仓库后，可以用类似这样的第一条 prompt：
 
 ```text
-I want to start a mathematical research project.
+我想用这个仓库启动一个 Co-Mathematician 数学研究项目。
 
-Problem context:
-...
-
-Known definitions, notation, and constraints:
-...
-
-Relevant references or files:
-...
-
-Please formalize the research question and propose goals.
-Do not create workstreams yet.
+请先检查工作区状态，刷新项目级 skill registry，然后带我完成 onboarding。
+现在不要开始具体研究。
 ```
 
-If a domain Skill is explicitly invoked, the interaction may enter
-skill-guided mode instead. In that case, the Skill's own opening, modeling, and
-approval rules control the next steps. Co-Mathematician records the handoff and
-keeps provenance, uncertainty, failures, and final-paper gates available when
-the user promotes the task into a research project.
+onboarding 的第一个偏好问题应该是文档语言策略：
 
-The Project Coordinator should update:
+1. 所有 workspace documents 都用英文。
+2. research notes 用用户语言，schemas、gates、reviews 用英文。
+3. 所有人类可读 research documents 都用用户语言。
+4. 跟随每个 project 或 conversation 的语言。
+
+## 开始一个数学研究项目
+
+onboarding 开始后，再把问题背景给 agent：
+
+```text
+我想开始一个数学研究项目。
+
+问题背景：
+...
+
+已知定义、符号和约束：
+...
+
+相关文献、文件或上下文：
+...
+
+请先 formalize research question，并提出 proposed goals。
+现在不要创建 workstreams。
+```
+
+如果用户明确调用了某个 domain Skill，也可以进入 skill-guided mode。此时下一步
+由该 Skill 自己的 opening、modeling 和 approval rules 控制；Co-Mathematician
+只记录 handoff，并在任务被提升为研究项目时继续提供 provenance、uncertainty、
+failures 和 final-paper gates。
+
+Project Coordinator 应更新：
 
 ```text
 workspace/project/PROJECT.md
@@ -249,125 +207,99 @@ workspace/project/PROJECT_STATUS.md
 workspace/project/messages.jsonl
 ```
 
-Draft goals are not executable. After the user approves a goal in chat, record
-that approval as a unique event:
+draft goal 不可执行。只有当 goal 状态是下面这样，才能启动 workstream：
 
-```bash
-co-math approve-goal \
-  --workspace workspace \
-  --goal-id G1 \
-  --approved-by user \
-  --approval-id approval-G1-001
+```yaml
+status: approved
 ```
 
-Check a goal gate:
+检查 goal gate：
 
 ```bash
 co-math check-gate --workspace workspace --gate goal_approval --goal-id G1
 ```
 
-Approve goals in chat with a clear instruction:
+在对话里明确 approve：
 
 ```text
-I approve goal G1 as written.
-You may create workstreams for G1.
+我批准 goal G1，按当前写法执行。
+你现在可以为 G1 创建 workstreams。
 ```
 
-## Creating Workstreams
+## 创建 Workstreams
 
-After goal approval, ask the Project Coordinator to create focused workstreams:
+goal approval 之后，再让 Project Coordinator 创建聚焦的 workstreams：
 
 ```text
-Create a literature workstream for approved goal G1.
-The workstream should identify relevant known results, exact theorem
-statements, assumptions, and citation provenance.
+请为已批准的 goal G1 创建一个 literature workstream。
+这个 workstream 需要找出相关已知结果、精确的 theorem statements、
+适用假设，以及 citation provenance。
 ```
 
-or:
+或者：
 
 ```text
-Create a proof exploration workstream for approved goal G1.
-Preserve failed attempts and expose unresolved uncertainty in the report.
+请为已批准的 goal G1 创建一个 proof exploration workstream。
+请保存失败尝试，并在 report 中显式暴露 unresolved uncertainty。
 ```
 
-The harness command is:
+harness 命令是：
 
 ```bash
 co-math new-workstream \
   --workspace workspace \
   --goal-id G1 \
   --title "Literature baseline review" \
-  --kind literature \
-  --author-run-id literature-run-001
+  --kind literature
 ```
 
-Allowed workstream kinds are `proof`, `computation`, `literature`, and `review`.
+允许的 workstream kind 是 `proof`、`computation`、`literature` 和 `review`。
 
-Each workstream should produce a report with:
+每个 workstream report 应包含：
 
-- provenance for important claims
-- explicit uncertainty
+- 重要 claims 的 provenance
+- 显式 uncertainty
 - failed explorations
-- independent reviewer output under `reviews/`
+- `reviews/` 下的独立 reviewer output
 
-Submit reviewer output through the schema-validating command. The harness binds
-the review to the current `report.md` SHA-256 and rejects the author run as a
-reviewer:
+检查 completion：
 
 ```bash
-co-math submit-review \
+co-math check-gate \
   --workspace workspace \
-  --workstream-id WS-G1-001-literature-baseline-review \
-  --reviewer logic_reviewer \
-  --reviewer-run-id logic-review-run-001 \
-  --approved \
-  --severity info \
-  --issue-type logic \
-  --comment "Approved."
+  --gate workstream_completion \
+  --workstream-id WS-G1-001-example
 ```
 
-Use repeated `--checked-artifact artifacts/<file>` options for code, data, or
-computation outputs that support the decision. Paths are workstream-relative;
-the harness records and later rechecks their SHA-256 digests.
+## 渲染 Working Paper
 
-Check readiness, freeze the reviewed snapshot, and then check completion:
-
-```bash
-co-math check-gate --workspace workspace --gate workstream_readiness --workstream-id WS-G1-001-literature-baseline-review
-co-math complete-workstream --workspace workspace --workstream-id WS-G1-001-literature-baseline-review
-co-math check-gate --workspace workspace --gate workstream_completion --workstream-id WS-G1-001-literature-baseline-review
-```
-
-## Generating And Synthesizing The Working Paper
-
-Generate a draft from immutable reviewed snapshots:
+当 workstream reports 通过独立审查后，渲染 final working paper：
 
 ```bash
 co-math render-final --workspace workspace
 ```
 
-The output is:
+输出位置是：
 
 ```text
-workspace/final/generated_draft.md
+workspace/final/working_paper.md
 ```
 
-The harness never overwrites `workspace/final/working_paper.md`. A synthesis
-agent owns that file and may revise the generated draft without introducing
-unreviewed claims.
+这是 working paper，不是聊天总结。它应该保留 provenance、uncertainty、
+failed explorations 和 reviewer status。
 
-## Workspace Framework
+## 工作区框架
 
 ```mermaid
 flowchart TD
-    User["Human mathematician"] --> Coordinator["Coding agent main thread<br/>Project Coordinator"]
+    User["人类数学研究者"] --> Coordinator["Coding agent 主线程<br/>Project Coordinator"]
 
-    Coordinator --> Onboarding["Onboarding<br/>context, language policy, notation, constraints"]
-    Onboarding --> ProjectFiles["Project state<br/>PROJECT.md<br/>GOALS.yaml<br/>PROJECT_STATUS.md<br/>messages.jsonl"]
+    Coordinator --> Onboarding["Onboarding<br/>背景、语言策略、符号、约束"]
+    Onboarding --> ProjectFiles["项目状态<br/>PROJECT.md<br/>GOALS.yaml<br/>PROJECT_STATUS.md<br/>messages.jsonl"]
 
     ProjectFiles --> GoalGate{"Goal approved?"}
-    GoalGate -- "no" --> Onboarding
-    GoalGate -- "yes" --> Workstreams["Approved workstreams"]
+    GoalGate -- "否" --> Onboarding
+    GoalGate -- "是" --> Workstreams["Approved workstreams"]
 
     Workstreams --> Proof["Proof exploration"]
     Workstreams --> Compute["Computational experiment"]
@@ -382,22 +314,19 @@ flowchart TD
 
     Report --> Reviewers["Independent reviewers<br/>logic, adversarial, citation"]
     Reviewers --> ReviewGate{"Review passed?"}
-    ReviewGate -- "no" --> Revision["Revise or escalate<br/>preserve uncertainty and failures"]
+    ReviewGate -- "否" --> Revision["修改或升级给用户<br/>保留 uncertainty 和 failures"]
     Revision --> Workstreams
-    ReviewGate -- "yes" --> Complete["Workstream complete"]
+    ReviewGate -- "是" --> Complete["Workstream complete"]
 
-    Complete --> Snapshot["reviewed/report-&lt;sha256&gt;.md"]
-    Snapshot --> Generated["final/generated_draft.md"]
-    Generated --> Synthesis["Synthesis agent"]
-    Synthesis --> Final["final/working_paper.md"]
+    Complete --> Final["final/working_paper.md"]
 
     Harness["co-math harness<br/>init, messages, workstreams, gates, render-final"]
     Harness -. validates .-> GoalGate
     Harness -. validates .-> ReviewGate
-    Harness -. renders .-> Generated
+    Harness -. renders .-> Final
 ```
 
-## Harness Commands
+## Harness 命令
 
 ```bash
 co-math init --workspace workspace
@@ -405,39 +334,20 @@ co-math refresh-skills --workspace workspace
 co-math suggest-skills --workspace workspace --query "..."
 co-math skill-handoff --workspace workspace --skill optimization-skill --mode skill_guided --reason "..." --query "..."
 co-math append-message --workspace workspace --sender project_coordinator --recipient user --type status --content "..."
-co-math approve-goal --workspace workspace --goal-id G1 --approved-by user --approval-id approval-G1-001
-co-math new-workstream --workspace workspace --goal-id G1 --title "..." --kind proof --author-run-id proof-run-001
-co-math submit-review --workspace workspace --workstream-id WS-G1-001-literature-baseline-review --reviewer logic_reviewer --reviewer-run-id review-run-001 --approved --severity info --issue-type logic --comment "Approved."
+co-math new-workstream --workspace workspace --goal-id G1 --title "..." --kind proof
 co-math check-gate --workspace workspace --gate goal_approval --goal-id G1
-co-math check-gate --workspace workspace --gate workstream_readiness --workstream-id WS-G1-001-literature-baseline-review
-co-math complete-workstream --workspace workspace --workstream-id WS-G1-001-literature-baseline-review
-co-math check-gate --workspace workspace --gate workstream_completion --workstream-id WS-G1-001-literature-baseline-review
+co-math check-gate --workspace workspace --gate workstream_completion --workstream-id WS-G1-001-example
 co-math render-final --workspace workspace
 ```
 
 ## Agent Adapters
 
-Co-Mathematician separates role definitions from platform-specific adapters:
+mainly opencode.
 
-```text
-agents/roles/       canonical, platform-neutral role cards
-.codex/agents/      Codex TOML adapters
-.claude/agents/     Claude Code Markdown subagent adapters
-.cursor/rules/      Cursor project-rule adapters
-```
+如果你的 coding-agent 环境没有原生 subagent 功能，就使用 fresh reviewer prompt
+或独立 session，并把 review 保存到 workstream 的 `reviews/` 目录。
 
-| Coding agent | Reads first | Native adapter |
-| --- | --- | --- |
-| Generic repository-aware agent | `AGENTS.md`, `.agents/skills/co-mathematician/SKILL.md`, `agents/roles/` | no native adapter required |
-| Codex | same generic files | `.codex/config.toml`, `.codex/agents/*.toml` |
-| Claude Code | `CLAUDE.md`, `AGENTS.md`, `agents/roles/` | `.claude/agents/*.md` |
-| Cursor | `.cursor/rules/co-mathematician.mdc`, `.cursor/rules/co-mathematician-roles.mdc`, `agents/roles/` | Cursor project rules and focused Agent sessions |
-
-If your coding-agent environment has no native subagent feature, use a fresh
-reviewer prompt or a separate session and save the review under the workstream
-`reviews/` directory.
-
-## Repository Layout
+## 仓库结构
 
 ```text
 AGENTS.md
@@ -447,18 +357,17 @@ agents/roles/
 .codex/
 .claude/
 .cursor/
-assets/
 harness/co_math/
 workspace/
 ```
 
-## Tests
+## 测试
 
 ```bash
 python3 -m pip install -e ".[dev]"
 python3 -m pytest harness/tests -q
 ```
 
-## License
+## 许可证
 
-MIT. See `LICENSE`.
+MIT。见 `LICENSE`。
