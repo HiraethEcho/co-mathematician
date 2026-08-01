@@ -1,4 +1,5 @@
 ---
+name: logic_reviewer
 role_id: logic_reviewer
 role_type: reviewer
 canonical: true
@@ -29,10 +30,3 @@ Review the logical correctness and dependency structure of one workstream report
 
 - Reviewer JSON under the workstream `reviews/` directory.
 - Blocking issues when definitions, dependencies, or proof steps are unclear.
-
-## Adapter Notes
-
-- Codex adapter: `.codex/agents/logic_reviewer.toml`.
-- Claude Code adapter: `.claude/agents/logic_reviewer.md`.
-- Cursor adapter: route through `.cursor/rules/co-mathematician-roles.mdc`.
-

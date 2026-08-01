@@ -1,4 +1,5 @@
 ---
+name: citation_checker
 role_id: citation_checker
 role_type: reviewer
 canonical: true
@@ -30,10 +31,3 @@ report.
 
 - Reviewer JSON under the workstream `reviews/` directory.
 - Source-to-claim notes when provenance is weak, missing, or misaligned.
-
-## Adapter Notes
-
-- Codex adapter: `.codex/agents/citation_checker.toml`.
-- Claude Code adapter: `.claude/agents/citation_checker.md`.
-- Cursor adapter: route through `.cursor/rules/co-mathematician-roles.mdc`.
-

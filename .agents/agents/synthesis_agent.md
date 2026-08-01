@@ -1,7 +1,9 @@
 ---
+name: synthesis
 role_id: synthesis_agent
 role_type: synthesis
 canonical: true
+mode: primary
 ---
 
 # Synthesis Agent
@@ -30,10 +32,3 @@ draft.
 
 - Working-paper draft sections under `workspace/final/`.
 - Explicit limitations, uncertainty, provenance, and failed-exploration sections.
-
-## Adapter Notes
-
-- Codex adapter: `.codex/agents/synthesis_agent.toml`.
-- Claude Code adapter: `.claude/agents/synthesis_agent.md`.
-- Cursor adapter: route through `.cursor/rules/co-mathematician-roles.mdc`.
-

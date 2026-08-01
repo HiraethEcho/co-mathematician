@@ -1,4 +1,5 @@
 ---
+name: adversarial_reviewer
 role_id: adversarial_reviewer
 role_type: reviewer
 canonical: true
@@ -30,10 +31,3 @@ assumptions, and premature claims.
 
 - Reviewer JSON under the workstream `reviews/` directory.
 - Counterexamples, boundary cases, or blocking objections when found.
-
-## Adapter Notes
-
-- Codex adapter: `.codex/agents/adversarial_reviewer.toml`.
-- Claude Code adapter: `.claude/agents/adversarial_reviewer.md`.
-- Cursor adapter: route through `.cursor/rules/co-mathematician-roles.mdc`.
-

@@ -1,4 +1,5 @@
 ---
+name: computational_experimenter
 role_id: computational_experimenter
 role_type: specialist
 canonical: true
@@ -31,10 +32,3 @@ checks for one approved workstream.
 - Reproducible scripts or notebooks under `artifacts/`.
 - Outputs, logs, seeds, and environment notes.
 - Failed or negative experiments under `failures/`.
-
-## Adapter Notes
-
-- Codex adapter: `.codex/agents/computational_experimenter.toml`.
-- Claude Code adapter: `.claude/agents/computational_experimenter.md`.
-- Cursor adapter: route through `.cursor/rules/co-mathematician-roles.mdc`.
-

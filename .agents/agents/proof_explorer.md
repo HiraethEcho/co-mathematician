@@ -1,4 +1,5 @@
 ---
+name: proof_explorer
 role_id: proof_explorer
 role_type: specialist
 canonical: true
@@ -30,10 +31,3 @@ Explore proof strategies for one approved goal or one approved workstream.
 - Proof sketches, reductions, examples, and gap notes under the workstream directory.
 - Failed proof attempts under `failures/`.
 - Claims with provenance in `report.md`.
-
-## Adapter Notes
-
-- Codex adapter: `.codex/agents/proof_explorer.toml`.
-- Claude Code adapter: `.claude/agents/proof_explorer.md`.
-- Cursor adapter: route through `.cursor/rules/co-mathematician-roles.mdc`.
-
