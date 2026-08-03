@@ -3,6 +3,7 @@ name: proof_explorer
 role_id: proof_explorer
 role_type: specialist
 canonical: true
+mode: primary
 ---
 
 # Proof Explorer

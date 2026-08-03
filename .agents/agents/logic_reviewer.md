@@ -3,6 +3,7 @@ name: logic_reviewer
 role_id: logic_reviewer
 role_type: reviewer
 canonical: true
+mode: primary
 ---
 
 # Logic Reviewer
