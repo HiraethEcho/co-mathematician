@@ -62,7 +62,8 @@ no force push is allowed.
 - Import the Python modules and parse every new command.
 - Run read-only commands against the current configured project directory.
 - Build the Python wheel and confirm it contains the canonical Skill.
-- Check a created project's `.agents/skills` and agent entry files.
+- Inspect the packaged Skill and project agent-file writer without creating a
+  substitute research project.
 - Check both README command sequences against the actual CLI help.
 - Confirm both remote main heads and final repository trees after pushing.
 
