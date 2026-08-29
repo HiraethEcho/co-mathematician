@@ -8,8 +8,6 @@ from .schemas import (
     SkillHandoffRecord,
     utc_timestamp,
 )
-from .storage import append_jsonl, atomic_write_text, workspace_lock
-from .workspace import _refresh_project_status_unlocked
 
 
 def record_skill_handoff(
@@ -35,14 +33,13 @@ def record_skill_handoff(
         "skill_path": skill_path,
     }
 
-    root = Path(workspace)
-    with workspace_lock(root):
-        project = root / "project"
-        project.mkdir(parents=True, exist_ok=True)
-        jsonl_path = project / "skill_handoffs.jsonl"
-        append_jsonl(jsonl_path, record)
-        _write_markdown(project / "SKILL_HANDOFFS.md", read_skill_handoffs(root))
-        _refresh_project_status_unlocked(root)
+    project = Path(workspace) / "project"
+    project.mkdir(parents=True, exist_ok=True)
+    jsonl_path = project / "skill_handoffs.jsonl"
+    with jsonl_path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+    _write_markdown(project / "SKILL_HANDOFFS.md", read_skill_handoffs(workspace))
     return record
 
 
@@ -80,4 +77,4 @@ def _write_markdown(path: Path, records: list[SkillHandoffRecord]) -> None:
                 "",
             ]
         )
-    atomic_write_text(path, "\n".join(lines).rstrip() + "\n")
+    path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")

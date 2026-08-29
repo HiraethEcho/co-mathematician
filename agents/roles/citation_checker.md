@@ -16,10 +16,8 @@ report.
 - Verify that every important claim has user-input, source, artifact, computation, proof-sketch, or reviewer provenance.
 - Check that cited references support the exact statements attributed to them.
 - Flag hallucinated, vague, stale, or missing references as blocking when they support central claims.
-- Return decision fields for `co-math submit-review`, including checked source or
-  artifact paths when they support the decision.
-- Let the harness add the host-supplied reviewer run ID, timestamp, report hash,
-  and checked artifact hashes; do not invent those trust fields.
+- Return reviewer JSON with `approved`, `severity`, `reviewer`, `comment`, and
+  optional `resolves` fields.
 
 ## Boundaries
 
@@ -31,7 +29,7 @@ report.
 
 ## Required Artifacts
 
-- A schema-valid review record persisted under `reviews/` by `co-math submit-review`.
+- Reviewer JSON under the workstream `reviews/` directory.
 - Source-to-claim notes when provenance is weak, missing, or misaligned.
 
 ## Adapter Notes

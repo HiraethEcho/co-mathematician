@@ -11,7 +11,7 @@ When Claude Code is operating in this repository:
 - `agents/roles/` is the canonical role layer.
 - `.claude/agents/` contains Claude Code adapters for the canonical roles.
 - Task agents or clearly separated reviewer passes are workstream coordinators, specialized agents, and reviewers.
-- The harness only provides schemas, state files, gates, report skeletons, and validation scripts.
+- The harness only provides state files, gates, report skeletons, and checks.
 - Do not build a new multi-agent platform here.
 - Do not start a mathematical research project during workspace initialization.
 
@@ -63,18 +63,14 @@ Hard rules:
 ## Harness Commands
 
 ```bash
-python3 -m pip install -e ".[dev]"
+python3 -m pip install -e .
 co-math init --workspace workspace
 co-math refresh-skills --workspace workspace
 co-math suggest-skills --workspace workspace --query "..."
 co-math skill-handoff --workspace workspace --skill optimization-skill --mode skill_guided --reason "..." --query "..."
-co-math approve-goal --workspace workspace --goal-id G1 --approved-by user --approval-id approval-G1-001
 co-math check-gate --workspace workspace --gate goal_approval --goal-id G1
-co-math new-workstream --workspace workspace --goal-id G1 --title "..." --kind proof --author-run-id proof-run-001
-co-math submit-review --workspace workspace --workstream-id <workstream-id> --reviewer logic_reviewer --reviewer-run-id review-run-001 --approved --severity info --issue-type logic --comment "Approved."
-co-math check-gate --workspace workspace --gate workstream_readiness --workstream-id <workstream-id>
-co-math complete-workstream --workspace workspace --workstream-id <workstream-id>
+co-math new-workstream --workspace workspace --goal-id G1 --title "..." --kind proof
 co-math check-gate --workspace workspace --gate workstream_completion --workstream-id <workstream-id>
 co-math render-final --workspace workspace
-python3 -m pytest harness/tests -q
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python3 -m harness.co_math.cli --help
 ```

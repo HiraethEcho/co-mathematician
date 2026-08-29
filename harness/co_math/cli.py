@@ -2,23 +2,31 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from pathlib import Path
 
+from .context import project_summary, render_next, render_resume
 from .gating import check_gate
 from .messages import append_message
+from .project import (
+    DEFAULT_PROJECTS_HOME,
+    Project,
+    archive_project,
+    configure_projects_home,
+    create_project,
+    list_projects,
+    projects_home as get_projects_home,
+    reopen_project,
+    resolve_project,
+)
 from .reports import render_final
-from .reviews import submit_review
 from .schemas import (
     VALID_MESSAGE_TYPES,
-    VALID_REVIEW_ISSUE_TYPES,
-    VALID_REVIEW_SEVERITIES,
     VALID_SKILL_HANDOFF_MODES,
     VALID_WORKSTREAM_KINDS,
 )
 from .skill_handoff import record_skill_handoff
 from .skills import refresh_skill_registry, suggest_skills
-from .workspace import approve_goal, complete_workstream, init_workspace, new_workstream
+from .workspace import init_workspace, new_workstream
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -27,13 +35,71 @@ def main(argv: list[str] | None = None) -> int:
     try:
         return args.func(args)
     except Exception as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
+        print(f"ERROR: {exc}")
         return 1
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="co-math")
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    setup_parser = subparsers.add_parser(
+        "setup", help="Choose the parent directory for Co-Math projects"
+    )
+    setup_parser.add_argument(
+        "--projects-home", default=str(DEFAULT_PROJECTS_HOME)
+    )
+    setup_parser.add_argument("--json", action="store_true")
+    setup_parser.set_defaults(func=_cmd_setup)
+
+    new_parser = subparsers.add_parser(
+        "new", help="Create an independent Co-Math project"
+    )
+    new_parser.add_argument("name")
+    new_parser.add_argument("--projects-home")
+    new_parser.add_argument("--no-git", action="store_true")
+    new_parser.add_argument("--json", action="store_true")
+    new_parser.set_defaults(func=_cmd_new_project)
+
+    list_parser = subparsers.add_parser("list", help="List Co-Math projects")
+    list_parser.add_argument("--projects-home")
+    list_parser.add_argument("--json", action="store_true")
+    list_parser.set_defaults(func=_cmd_list_projects)
+
+    status_parser = subparsers.add_parser(
+        "status", help="Show the current project state"
+    )
+    _add_project_target(status_parser)
+    status_parser.add_argument("--json", action="store_true")
+    status_parser.set_defaults(func=_cmd_project_status)
+
+    resume_parser = subparsers.add_parser(
+        "resume", help="Summarize a project before continuing"
+    )
+    _add_project_target(resume_parser)
+    resume_parser.add_argument("--json", action="store_true")
+    resume_parser.set_defaults(func=_cmd_project_resume)
+
+    next_parser = subparsers.add_parser(
+        "next", help="Show one useful next project action"
+    )
+    _add_project_target(next_parser)
+    next_parser.add_argument("--json", action="store_true")
+    next_parser.set_defaults(func=_cmd_project_next)
+
+    archive_parser = subparsers.add_parser(
+        "archive", help="Archive a project without deleting its files"
+    )
+    _add_project_target(archive_parser)
+    archive_parser.add_argument("--json", action="store_true")
+    archive_parser.set_defaults(func=_cmd_project_archive)
+
+    reopen_parser = subparsers.add_parser(
+        "reopen", help="Reopen an archived project"
+    )
+    _add_project_target(reopen_parser)
+    reopen_parser.add_argument("--json", action="store_true")
+    reopen_parser.set_defaults(func=_cmd_project_reopen)
 
     init_parser = subparsers.add_parser("init", help="Initialize workspace scaffold")
     init_parser.add_argument("--workspace", default="workspace")
@@ -49,63 +115,18 @@ def build_parser() -> argparse.ArgumentParser:
     message_parser.add_argument("--uncertainty", action="append", default=[])
     message_parser.set_defaults(func=_cmd_append_message)
 
-    approve_parser = subparsers.add_parser(
-        "approve-goal", help="Record explicit user approval for a draft goal"
-    )
-    approve_parser.add_argument("--workspace", default="workspace")
-    approve_parser.add_argument("--goal-id", required=True)
-    approve_parser.add_argument("--approved-by", required=True)
-    approve_parser.add_argument("--approval-id", required=True)
-    approve_parser.set_defaults(func=_cmd_approve_goal)
-
     ws_parser = subparsers.add_parser("new-workstream", help="Create approved-goal workstream")
     ws_parser.add_argument("--workspace", default="workspace")
     ws_parser.add_argument("--goal-id", required=True)
     ws_parser.add_argument("--title", required=True)
     ws_parser.add_argument("--kind", choices=VALID_WORKSTREAM_KINDS, required=True)
-    ws_parser.add_argument("--author-run-id", required=True)
     ws_parser.set_defaults(func=_cmd_new_workstream)
-
-    review_parser = subparsers.add_parser(
-        "submit-review", help="Validate and append a report-bound reviewer record"
-    )
-    review_parser.add_argument("--workspace", default="workspace")
-    review_parser.add_argument("--workstream-id", required=True)
-    review_parser.add_argument("--reviewer", required=True)
-    review_parser.add_argument("--reviewer-run-id", required=True)
-    approval_group = review_parser.add_mutually_exclusive_group(required=True)
-    approval_group.add_argument("--approved", dest="approved", action="store_true")
-    approval_group.add_argument("--rejected", dest="approved", action="store_false")
-    review_parser.add_argument(
-        "--severity", choices=VALID_REVIEW_SEVERITIES, required=True
-    )
-    review_parser.add_argument(
-        "--issue-type", choices=VALID_REVIEW_ISSUE_TYPES, required=True
-    )
-    review_parser.add_argument("--comment", required=True)
-    review_parser.add_argument("--suggested-fix", default="")
-    review_parser.add_argument("--resolves", action="append", default=[])
-    review_parser.add_argument("--checked-artifact", action="append", default=[])
-    review_parser.add_argument("--review-id")
-    review_parser.set_defaults(func=_cmd_submit_review)
-
-    complete_parser = subparsers.add_parser(
-        "complete-workstream", help="Freeze a reviewed report and complete its lifecycle"
-    )
-    complete_parser.add_argument("--workspace", default="workspace")
-    complete_parser.add_argument("--workstream-id", required=True)
-    complete_parser.set_defaults(func=_cmd_complete_workstream)
 
     gate_parser = subparsers.add_parser("check-gate", help="Check a harness gate")
     gate_parser.add_argument("--workspace", default="workspace")
     gate_parser.add_argument(
         "--gate",
-        choices=(
-            "goal_approval",
-            "workstream_readiness",
-            "workstream_completion",
-            "final_render",
-        ),
+        choices=("goal_approval", "workstream_completion", "final_render"),
         required=True,
     )
     gate_parser.add_argument("--goal-id")
@@ -113,9 +134,7 @@ def build_parser() -> argparse.ArgumentParser:
     gate_parser.add_argument("--json", action="store_true")
     gate_parser.set_defaults(func=_cmd_check_gate)
 
-    render_parser = subparsers.add_parser(
-        "render-final", help="Render a generated draft from reviewed snapshots"
-    )
+    render_parser = subparsers.add_parser("render-final", help="Render final working paper")
     render_parser.add_argument("--workspace", default="workspace")
     render_parser.set_defaults(func=_cmd_render_final)
 
@@ -161,6 +180,115 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _cmd_setup(args: argparse.Namespace) -> int:
+    home = configure_projects_home(args.projects_home)
+    output = {"projects_home": str(home)}
+    if args.json:
+        _print_json(output)
+    else:
+        print(f"Co-Math projects directory: {home}")
+    return 0
+
+
+def _cmd_new_project(args: argparse.Namespace) -> int:
+    project, git_initialized = create_project(
+        args.name,
+        projects_home_path=args.projects_home,
+        initialize_git=not args.no_git,
+    )
+    output = {
+        "name": project.name,
+        "path": str(project.root),
+        "workspace": str(project.workspace),
+        "git_initialized": git_initialized,
+        "next_action": "Open this directory in your coding agent.",
+    }
+    if args.json:
+        _print_json(output)
+    else:
+        print(f"Created Co-Math project: {project.name}")
+        print(f"Path: {project.root}")
+        if not args.no_git and not git_initialized:
+            print("Git was not initialized; run git init in the project if needed.")
+        print("Next: Open this directory in your coding agent.")
+    return 0
+
+
+def _cmd_list_projects(args: argparse.Namespace) -> int:
+    home = get_projects_home(args.projects_home)
+    found = list_projects(args.projects_home)
+    output = [
+        {
+            "name": project.name,
+            "path": str(project.root),
+            "workspace": str(project.workspace),
+            **project_summary(project),
+        }
+        for project in found
+    ]
+    if args.json:
+        _print_json(output)
+    elif not output:
+        print(f"No Co-Math projects found under {home}.")
+    else:
+        for item in output:
+            print(f"{item['name']}: {item['path']}")
+            print(f"  {item['current']}")
+            print(f"  Next: {item['next_action']}")
+    return 0
+
+
+def _cmd_project_status(args: argparse.Namespace) -> int:
+    summary = project_summary(_project_from_args(args))
+    if args.json:
+        _print_json(summary)
+    else:
+        print(render_resume(summary))
+    return 1 if summary["status"] == "invalid" else 0
+
+
+def _cmd_project_resume(args: argparse.Namespace) -> int:
+    summary = project_summary(_project_from_args(args))
+    if args.json:
+        _print_json(summary)
+    else:
+        print(render_resume(summary))
+    return 1 if summary["status"] == "invalid" else 0
+
+
+def _cmd_project_next(args: argparse.Namespace) -> int:
+    summary = project_summary(_project_from_args(args))
+    if args.json:
+        _print_json(summary)
+    else:
+        print(render_next(summary))
+    return 1 if summary["status"] == "invalid" else 0
+
+
+def _cmd_project_archive(args: argparse.Namespace) -> int:
+    project = _project_from_args(args)
+    archive_project(project)
+    summary = project_summary(project)
+    if args.json:
+        _print_json(summary)
+    else:
+        print(f"Archived Co-Math project: {project.name}")
+        print(f"Path: {project.root}")
+    return 0
+
+
+def _cmd_project_reopen(args: argparse.Namespace) -> int:
+    project = _project_from_args(args)
+    reopen_project(project)
+    summary = project_summary(project)
+    if args.json:
+        _print_json(summary)
+    else:
+        print(f"Reopened Co-Math project: {project.name}")
+        print(render_next(summary))
+    return 0
+
+
 def _cmd_init(args: argparse.Namespace) -> int:
     root = init_workspace(args.workspace)
     print(f"Initialized workspace: {Path(root)}")
@@ -181,60 +309,14 @@ def _cmd_append_message(args: argparse.Namespace) -> int:
     return 0
 
 
-def _cmd_approve_goal(args: argparse.Namespace) -> int:
-    goal = approve_goal(
-        args.workspace,
-        goal_id=args.goal_id,
-        approved_by=args.approved_by,
-        approval_id=args.approval_id,
-    )
-    print(
-        f"Approved goal: {goal['id']} "
-        f"(approval_id: {goal['approval_id']})"
-    )
-    return 0
-
-
 def _cmd_new_workstream(args: argparse.Namespace) -> int:
     path = new_workstream(
         args.workspace,
         goal_id=args.goal_id,
         title=args.title,
         kind=args.kind,
-        author_run_id=args.author_run_id,
     )
     print(f"Created workstream: {path}")
-    return 0
-
-
-def _cmd_submit_review(args: argparse.Namespace) -> int:
-    path, record = submit_review(
-        args.workspace,
-        workstream_id=args.workstream_id,
-        reviewer=args.reviewer,
-        reviewer_run_id=args.reviewer_run_id,
-        approved=args.approved,
-        severity=args.severity,
-        issue_type=args.issue_type,
-        comment=args.comment,
-        suggested_fix=args.suggested_fix,
-        resolves=args.resolves,
-        checked_artifacts=args.checked_artifact,
-        review_id=args.review_id,
-    )
-    print(
-        f"Submitted review: {path} "
-        f"(report_sha256: {record['report_sha256']})"
-    )
-    return 0
-
-
-def _cmd_complete_workstream(args: argparse.Namespace) -> int:
-    snapshot = complete_workstream(
-        args.workspace,
-        workstream_id=args.workstream_id,
-    )
-    print(f"Completed workstream with reviewed snapshot: {snapshot}")
     return 0
 
 
@@ -267,7 +349,7 @@ def _cmd_check_gate(args: argparse.Namespace) -> int:
 
 def _cmd_render_final(args: argparse.Namespace) -> int:
     path = render_final(args.workspace)
-    print(f"Rendered generated working-paper draft: {path}")
+    print(f"Rendered final working paper: {path}")
     return 0
 
 
@@ -323,6 +405,21 @@ def _cmd_skill_handoff(args: argparse.Namespace) -> int:
         f"{Path(args.workspace) / 'project' / 'skill_handoffs.jsonl'}"
     )
     return 0
+
+
+def _add_project_target(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--project",
+        help="Project directory; defaults to discovery from the current directory",
+    )
+
+
+def _project_from_args(args: argparse.Namespace) -> Project:
+    return resolve_project(getattr(args, "project", None))
+
+
+def _print_json(value: object) -> None:
+    print(json.dumps(value, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":
