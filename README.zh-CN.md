@@ -6,10 +6,9 @@
   <img src="docs/co-mathematician-architecture.png" alt="Co-Mathematician 仓库架构" width="940">
 </p>
 
-Co-Mathematician 是一个轻量级的数学研究工作区。它的用法不是启动一个新的
-multi-agent platform，而是把一个能读写仓库的 coding agent 组织成一个可追踪、
-可复核、可接续的数学研究环境。Codex、Claude Code、Cursor、OpenCode 等工具
-只是同一套 workspace protocol 的 adapters。
+Co-Mathematician 是一个轻量级的数学研究工作区。`co-math` 命令安装一次后，每个
+数学项目都放在独立、可长期维护的目录和可选 Git 仓库中。Codex、Claude Code、
+Cursor、OpenCode 等能读取仓库的 coding agent 都使用同一套项目文件。
 
 核心公式是：
 
@@ -34,61 +33,78 @@ Co-Mathematician 会把一次数学研究对话变成一个文件化项目：
 Python harness 不运行 agents。它只负责初始化文件、追加 messages、创建已批准
 workstreams、检查 gates、渲染 final working paper。
 
-## 安装并打开工作区
+## 安装并创建项目
 
-你可以手动安装，也可以让 coding agent 帮你完成拉取和初始化。
-
-### Agent-led setup
-
-如果你的 coding agent 可以运行 shell 命令，可以先这样说：
-
-```text
-请你拉取这个仓库：
-https://github.com/VeryMath/co-mathematician
-
-把它作为当前工作区打开，安装本地 harness，并初始化 `workspace/`。
-完成后开始 Co-Mathematician onboarding。
-不要启动任何数学 workstream。
-```
-
-### 手动安装
-
-clone 仓库：
+clone Co-Math Core 并安装命令：
 
 ```bash
 git clone https://github.com/VeryMath/co-mathematician.git
 cd co-mathematician
-```
-
-安装本地 harness：
-
-```bash
-python3 -m pip install -e ".[dev]"
+python3 -m pip install -e .
 co-math --help
 ```
 
-初始化 workspace 文件：
+指定所有数学项目的父目录。不执行这一步时，默认使用 `~/CoMathProjects`。
+
+```bash
+co-math setup --projects-home ~/CoMathProjects
+```
+
+创建第一个项目：
+
+```bash
+co-math new "Muon Convergence"
+```
+
+命令会返回新项目路径。用任意 coding agent 打开该目录，然后说：
+
+```text
+继续这个 Co-Math 项目。
+```
+
+每个新项目都包含：
+
+```text
+co-math.toml
+AGENTS.md
+CLAUDE.md
+.agents/skills/co-mathematician/SKILL.md
+workspace/
+```
+
+`.agents/skills/` 是唯一完整 Skill 的位置。支持 Agent Skills 的 coding agent 会
+直接发现它；`AGENTS.md` 是通用入口，简短的 `CLAUDE.md` 让 Claude Code 指向同一
+份说明。Co-Math 不为不同 coding agent 维护多套工作流。
+
+### 日常项目流程
+
+```bash
+co-math list
+co-math resume --project ~/CoMathProjects/Muon\ Convergence
+co-math next --project ~/CoMathProjects/Muon\ Convergence
+co-math archive --project ~/CoMathProjects/Muon\ Convergence
+co-math reopen --project ~/CoMathProjects/Muon\ Convergence
+```
+
+项目 A 完成后先归档，再运行 `co-math new "Project B"`。项目 B 会得到新的目录、
+workspace、Skill 和 Git 仓库，不会清空或复用项目 A 的研究文件。
+
+### 让 Coding Agent 帮你设置
+
+任何能执行终端命令的 coding agent 都可以完成设置：
+
+```text
+请从 https://github.com/VeryMath/co-mathematician.git 安装 Co-Math，
+把 ~/CoMathProjects 设为项目目录，然后创建名为 Muon Convergence 的项目。
+只返回项目路径，现在不要开始研究。
+```
+
+### Core 仓库内工作区
+
+仓库自带的 `workspace/` 继续用于开发 Co-Math 本身和兼容旧流程：
 
 ```bash
 co-math init --workspace workspace
-```
-
-然后用你的 coding agent 打开这个文件夹。
-
-建议方式：
-
-- **任意能读写仓库的 coding agent**：读取 `AGENTS.md`、
-  `.agents/skills/co-mathematician/SKILL.md` 和 `agents/roles/`。
-- **Codex adapter**：额外使用 `.codex/config.toml` 和 `.codex/agents/*.toml`。
-- **Claude Code**：打开仓库，让 Claude Code 读取 `CLAUDE.md`、`AGENTS.md`
-  `agents/roles/` 和 `.claude/agents/`。
-- **Cursor**：打开仓库，使用 `.cursor/rules/` 中的项目规则。
-- **OpenCode + DeepSeek 或其他 provider**：先配置好模型 provider，再打开这个仓库。
-  不要把 API key 写入仓库文件。
-
-不安装 package 也可以运行：
-
-```bash
 PYTHONPATH=. python3 -m harness.co_math.cli --help
 ```
 
@@ -139,12 +155,11 @@ goal/workstream/reviewer 流程。
 
 ## 第一次交互
 
-在 coding agent 中打开仓库后，可以用类似这样的第一条 prompt：
+用 coding agent 打开新建的项目目录后，可以直接说：
 
 ```text
-我想用这个仓库启动一个 Co-Mathematician 数学研究项目。
-
-请先检查工作区状态，刷新项目级 skill registry，然后带我完成 onboarding。
+继续这个 Co-Math 项目。请读取 AGENTS.md 和 Co-Mathematician Skill，
+运行 `co-math resume --project .`，然后带我完成 onboarding。
 现在不要开始具体研究。
 ```
 
@@ -311,6 +326,14 @@ flowchart TD
 ## Harness 命令
 
 ```bash
+co-math setup --projects-home ~/CoMathProjects
+co-math new "Project Name"
+co-math list
+co-math status --project /path/to/project
+co-math resume --project /path/to/project
+co-math next --project /path/to/project
+co-math archive --project /path/to/project
+co-math reopen --project /path/to/project
 co-math init --workspace workspace
 co-math refresh-skills --workspace workspace
 co-math suggest-skills --workspace workspace --query "..."
@@ -322,9 +345,9 @@ co-math check-gate --workspace workspace --gate workstream_completion --workstre
 co-math render-final --workspace workspace
 ```
 
-## Agent Adapters
+## Coding Agent 兼容性
 
-Co-Mathematician 把 role definitions 和平台特定 adapters 分开：
+新建项目只使用一个标准 Skill 和一套命令。Core 仓库内的平台文件仅用于开发：
 
 ```text
 agents/roles/       canonical, platform-neutral role cards
@@ -333,35 +356,31 @@ agents/roles/       canonical, platform-neutral role cards
 .cursor/rules/      Cursor project-rule adapters
 ```
 
-| Coding agent | 优先读取 | Native adapter |
+| Coding agent | 新建项目入口 | 可选 Core 开发适配 |
 | --- | --- | --- |
-| Generic repository-aware agent | `AGENTS.md`、`.agents/skills/co-mathematician/SKILL.md`、`agents/roles/` | 不需要 native adapter |
-| Codex | 同上 generic files | `.codex/config.toml`、`.codex/agents/*.toml` |
-| Claude Code | `CLAUDE.md`、`AGENTS.md`、`agents/roles/` | `.claude/agents/*.md` |
-| Cursor | `.cursor/rules/co-mathematician.mdc`、`.cursor/rules/co-mathematician-roles.mdc`、`agents/roles/` | Cursor project rules 和 focused Agent sessions |
+| 通用 repository-aware agent | `AGENTS.md`、`.agents/skills/co-mathematician/SKILL.md` | 不需要 |
+| Codex | 同一套标准文件 | `.codex/` |
+| Claude Code | `CLAUDE.md` 指向标准文件 | `.claude/` |
+| Cursor 或 OpenCode | 同一套标准文件 | 项目生命周期不需要额外适配 |
 
 如果你的 coding-agent 环境没有原生 subagent 功能，就使用 fresh reviewer prompt
 或独立 session，并把 review 保存到 workstream 的 `reviews/` 目录。
 
-## 仓库结构
+## 新建项目结构
 
 ```text
+co-math.toml
 AGENTS.md
 CLAUDE.md
 .agents/skills/co-mathematician/
-agents/roles/
-.codex/
-.claude/
-.cursor/
-harness/co_math/
 workspace/
 ```
 
-## 测试
+## 源码检查
 
 ```bash
-python3 -m pip install -e ".[dev]"
-python3 -m pytest harness/tests -q
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python3 -m harness.co_math.cli --help
+python3 -m pip wheel --no-deps --no-build-isolation .
 ```
 
 ## 许可证

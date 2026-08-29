@@ -7,10 +7,10 @@
 </p>
 
 Co-Mathematician is a lightweight research workspace for using a repository-aware
-coding agent as an AI co-mathematician. It is designed to be cloned, opened in a
-repository-aware coding agent, and used as a stateful mathematical research
-environment. Codex, Claude Code, Cursor, OpenCode, and similar tools are
-adapters to the same workspace protocol.
+coding agent as an AI co-mathematician. Install the `co-math` command once, then
+keep every mathematical project in its own long-lived directory and optional
+Git repository. Codex, Claude Code, Cursor, OpenCode, and similar tools all use
+the same project files.
 
 The core formula is:
 
@@ -36,65 +36,87 @@ The Python harness does not run agents. It only initializes files, appends
 messages, creates approved workstreams, checks gates, and renders the final
 working paper.
 
-## Install And Open The Workspace
+## Install And Create Projects
 
-You can set up the workspace manually, or ask your coding agent to do it.
-
-### Agent-led setup
-
-If your coding agent can run shell commands, start with:
-
-```text
-Please clone this repository:
-https://github.com/VeryMath/co-mathematician
-
-Open it as the current workspace, install the local harness, and initialize
-`workspace/`. After that, start Co-Mathematician onboarding.
-Do not start any mathematical workstream yet.
-```
-
-### Manual setup
-
-Clone the repository:
+Clone Co-Math Core and install its command:
 
 ```bash
 git clone https://github.com/VeryMath/co-mathematician.git
 cd co-mathematician
-```
-
-Install the local harness:
-
-```bash
-python3 -m pip install -e ".[dev]"
+python3 -m pip install -e .
 co-math --help
 ```
 
-Initialize the workspace files:
+Choose the parent directory for your projects. If you skip this command,
+Co-Math uses `~/CoMathProjects`.
+
+```bash
+co-math setup --projects-home ~/CoMathProjects
+```
+
+Create the first project:
+
+```bash
+co-math new "Muon Convergence"
+```
+
+The command prints the new path. Open that directory in your coding agent, then
+say:
+
+```text
+Continue this Co-Math project.
+```
+
+Every created project contains:
+
+```text
+co-math.toml
+AGENTS.md
+CLAUDE.md
+.agents/skills/co-mathematician/SKILL.md
+workspace/
+```
+
+`.agents/skills/` is the canonical Skill location. Coding agents that support
+Agent Skills discover it directly. `AGENTS.md` is the general entry point, and
+the short `CLAUDE.md` points Claude Code to the same instructions. There is no
+separate Co-Math workflow for each coding agent.
+
+### Daily Project Flow
+
+```bash
+co-math list
+co-math resume --project ~/CoMathProjects/Muon\ Convergence
+co-math next --project ~/CoMathProjects/Muon\ Convergence
+co-math archive --project ~/CoMathProjects/Muon\ Convergence
+co-math reopen --project ~/CoMathProjects/Muon\ Convergence
+```
+
+When project A is finished, archive it and run `co-math new "Project B"`.
+Project B receives a new directory, workspace, Skill, and Git repository; no
+files from project A are cleared or reused.
+
+### Coding-Agent Setup Prompt
+
+Any coding agent that can run terminal commands can do the setup for you:
+
+```text
+Install Co-Math from https://github.com/VeryMath/co-mathematician.git,
+set ~/CoMathProjects as the projects directory, and create a project named
+Muon Convergence. Return its path but do not start the research yet.
+```
+
+### Core Repository Workspace
+
+The checked-in `workspace/` remains available for developing Co-Math itself and
+for backward compatibility:
 
 ```bash
 co-math init --workspace workspace
-```
-
-Then open this folder in your coding agent.
-
-Suggested options:
-
-- **Any repository-aware coding agent**: read `AGENTS.md`,
-  `.agents/skills/co-mathematician/SKILL.md`, and `agents/roles/`.
-- **Codex adapter**: also use `.codex/config.toml` and `.codex/agents/*.toml`.
-- **Claude Code**: open this repository and let Claude Code read `CLAUDE.md`,
-  `AGENTS.md`, `agents/roles/`, and `.claude/agents/`.
-- **Cursor**: open this repository and use the rules in `.cursor/rules/`.
-- **OpenCode + DeepSeek or another provider**: configure your model provider
-  first, then open this repository. Never paste API keys into repo files.
-
-Without installing the package, use:
-
-```bash
 PYTHONPATH=. python3 -m harness.co_math.cli --help
 ```
 
-### Project-local skills
+### Project-Local Skills
 
 For AI4Math skill libraries and project-specific research workflows, install
 skills into this repository by default:
@@ -142,13 +164,11 @@ output or a final working paper.
 
 ## First Interaction
 
-After opening the repository in your coding agent, start with a prompt like:
+After opening a created project directory in your coding agent, start with:
 
 ```text
-I want to start a Co-Mathematician research project with this repository.
-
-Please check the workspace state first, refresh the project-local skill registry,
-and guide me through onboarding.
+Continue this Co-Math project. Read AGENTS.md and the Co-Mathematician Skill,
+run `co-math resume --project .`, and guide me through onboarding.
 Do not start concrete research yet.
 ```
 
@@ -317,6 +337,14 @@ flowchart TD
 ## Harness Commands
 
 ```bash
+co-math setup --projects-home ~/CoMathProjects
+co-math new "Project Name"
+co-math list
+co-math status --project /path/to/project
+co-math resume --project /path/to/project
+co-math next --project /path/to/project
+co-math archive --project /path/to/project
+co-math reopen --project /path/to/project
 co-math init --workspace workspace
 co-math refresh-skills --workspace workspace
 co-math suggest-skills --workspace workspace --query "..."
@@ -328,9 +356,10 @@ co-math check-gate --workspace workspace --gate workstream_completion --workstre
 co-math render-final --workspace workspace
 ```
 
-## Agent Adapters
+## Coding-Agent Compatibility
 
-Co-Mathematician separates role definitions from platform-specific adapters:
+Created projects use one standard Skill and one command. Platform-specific
+files in the Core repository are only development adapters:
 
 ```text
 agents/roles/       canonical, platform-neutral role cards
@@ -339,36 +368,32 @@ agents/roles/       canonical, platform-neutral role cards
 .cursor/rules/      Cursor project-rule adapters
 ```
 
-| Coding agent | Reads first | Native adapter |
+| Coding agent | Created project entry | Optional Core development adapter |
 | --- | --- | --- |
-| Generic repository-aware agent | `AGENTS.md`, `.agents/skills/co-mathematician/SKILL.md`, `agents/roles/` | no native adapter required |
-| Codex | same generic files | `.codex/config.toml`, `.codex/agents/*.toml` |
-| Claude Code | `CLAUDE.md`, `AGENTS.md`, `agents/roles/` | `.claude/agents/*.md` |
-| Cursor | `.cursor/rules/co-mathematician.mdc`, `.cursor/rules/co-mathematician-roles.mdc`, `agents/roles/` | Cursor project rules and focused Agent sessions |
+| Generic repository-aware agent | `AGENTS.md`, `.agents/skills/co-mathematician/SKILL.md` | none |
+| Codex | same standard files | `.codex/` |
+| Claude Code | `CLAUDE.md` points to the standard files | `.claude/` |
+| Cursor or OpenCode | same standard files | no adapter required for project lifecycle |
 
 If your coding-agent environment has no native subagent feature, use a fresh
 reviewer prompt or a separate session and save the review under the workstream
 `reviews/` directory.
 
-## Repository Layout
+## Created Project Layout
 
 ```text
+co-math.toml
 AGENTS.md
 CLAUDE.md
 .agents/skills/co-mathematician/
-agents/roles/
-.codex/
-.claude/
-.cursor/
-harness/co_math/
 workspace/
 ```
 
-## Tests
+## Source Checks
 
 ```bash
-python3 -m pip install -e ".[dev]"
-python3 -m pytest harness/tests -q
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python3 -m harness.co_math.cli --help
+python3 -m pip wheel --no-deps --no-build-isolation .
 ```
 
 ## License
