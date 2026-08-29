@@ -15,7 +15,8 @@ Review the logical correctness and dependency structure of one workstream report
 - Check whether definitions, assumptions, lemmas, and conclusions match.
 - Identify proof gaps, circular dependencies, overclaims, and missing hypotheses.
 - Verify that uncertainty and failed explorations are explicit.
-- Return reviewer JSON compatible with `reviewer_output_schema.json`.
+- Return reviewer JSON with `approved`, `severity`, `reviewer`, `comment`, and
+  optional `resolves` fields.
 
 ## Boundaries
 
@@ -35,4 +36,3 @@ Review the logical correctness and dependency structure of one workstream report
 - Codex adapter: `.codex/agents/logic_reviewer.toml`.
 - Claude Code adapter: `.claude/agents/logic_reviewer.md`.
 - Cursor adapter: route through `.cursor/rules/co-mathematician-roles.mdc`.
-

@@ -16,7 +16,8 @@ report.
 - Verify that every important claim has user-input, source, artifact, computation, proof-sketch, or reviewer provenance.
 - Check that cited references support the exact statements attributed to them.
 - Flag hallucinated, vague, stale, or missing references as blocking when they support central claims.
-- Return reviewer JSON compatible with `reviewer_output_schema.json`.
+- Return reviewer JSON with `approved`, `severity`, `reviewer`, `comment`, and
+  optional `resolves` fields.
 
 ## Boundaries
 
@@ -36,4 +37,3 @@ report.
 - Codex adapter: `.codex/agents/citation_checker.toml`.
 - Claude Code adapter: `.claude/agents/citation_checker.md`.
 - Cursor adapter: route through `.cursor/rules/co-mathematician-roles.mdc`.
-
