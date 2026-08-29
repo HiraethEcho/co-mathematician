@@ -1,6 +1,21 @@
-# Co-Mathematician Workspace
+<div align="center">
 
-> [English](README.md) | 中文
+# Co-Mathematician
+
+面向 coding agent 的仓库化数学研究工作区。
+
+[English](README.md) · [安装](#安装并创建项目) · [第一次交互](#第一次交互) · [版本更新](#版本更新) · [架构](#工作区框架)
+
+![version](https://img.shields.io/badge/version-0.2.0-blue)
+![workspace](https://img.shields.io/badge/workspace-research-2ea44f)
+![license](https://img.shields.io/badge/license-MIT-green)
+
+</div>
+
+<p align="center">
+  如果这个项目对你有帮助，欢迎为仓库点 Star。
+  <a href="https://github.com/VeryMath/co-mathematician"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/VeryMath/co-mathematician?style=social"></a>
+</p>
 
 <p align="center">
   <img src="docs/co-mathematician-architecture.png" alt="Co-Mathematician 仓库架构" width="940">
@@ -32,6 +47,19 @@ Co-Mathematician 会把一次数学研究对话变成一个文件化项目：
 
 Python harness 不运行 agents。它只负责初始化文件、追加 messages、创建已批准
 workstreams、检查 gates、渲染 final working paper。
+
+## 版本更新
+
+### 0.2.0 (2026-08-29)
+
+- 支持独立、可长期维护的项目目录和可选 Git 仓库
+- 在 `.agents/skills/` 提供一份供 coding agent 使用的项目级 Skill
+- 新增 `setup`、`new`、`list`、`status`、`resume`、`next`、`archive` 和 `reopen`
+- harness 继续只管理项目文件、研究状态、审查和 working paper
+
+### 0.1.0
+
+- 建立仓库化研究工作区、目标批准、workstream、独立审查和最终 working paper 流程
 
 ## 安装并创建项目
 

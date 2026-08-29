@@ -1,6 +1,21 @@
-# Co-Mathematician Workspace
+<div align="center">
 
-> English | [中文](README.zh-CN.md)
+# Co-Mathematician
+
+A repository-backed mathematical research workspace for coding agents.
+
+[中文说明](README.zh-CN.md) · [Setup](#install-and-create-projects) · [First interaction](#first-interaction) · [Updates](#version-updates) · [Architecture](#workspace-framework)
+
+![version](https://img.shields.io/badge/version-0.2.0-blue)
+![workspace](https://img.shields.io/badge/workspace-research-2ea44f)
+![license](https://img.shields.io/badge/license-MIT-green)
+
+</div>
+
+<p align="center">
+  If this project helps your work, please consider giving the repository a Star.
+  <a href="https://github.com/VeryMath/co-mathematician"><img alt="GitHub stars" src="https://img.shields.io/github/stars/VeryMath/co-mathematician?style=social"></a>
+</p>
 
 <p align="center">
   <img src="docs/co-mathematician-architecture.png" alt="Co-Mathematician repository architecture" width="940">
@@ -35,6 +50,20 @@ Co-Mathematician turns a math research conversation into a file-backed project:
 The Python harness does not run agents. It only initializes files, appends
 messages, creates approved workstreams, checks gates, and renders the final
 working paper.
+
+## Version Updates
+
+### 0.2.0 (2026-08-29)
+
+- added independent, long-lived project directories with optional Git repositories
+- added one canonical project Skill under `.agents/skills/` for coding agents
+- added `setup`, `new`, `list`, `status`, `resume`, `next`, `archive`, and `reopen`
+- kept the harness focused on project files, research state, reviews, and working papers
+
+### 0.1.0
+
+- introduced the repository-backed research workspace, approved goals,
+  workstreams, independent review, and final working-paper flow
 
 ## Install And Create Projects
 
