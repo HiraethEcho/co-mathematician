@@ -4,8 +4,20 @@ import argparse
 import json
 from pathlib import Path
 
+from .context import project_summary, render_next, render_resume
 from .gating import check_gate
 from .messages import append_message
+from .project import (
+    DEFAULT_PROJECTS_HOME,
+    Project,
+    archive_project,
+    configure_projects_home,
+    create_project,
+    list_projects,
+    projects_home as get_projects_home,
+    reopen_project,
+    resolve_project,
+)
 from .reports import render_final
 from .schemas import (
     VALID_MESSAGE_TYPES,
@@ -30,6 +42,64 @@ def main(argv: list[str] | None = None) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="co-math")
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    setup_parser = subparsers.add_parser(
+        "setup", help="Choose the parent directory for Co-Math projects"
+    )
+    setup_parser.add_argument(
+        "--projects-home", default=str(DEFAULT_PROJECTS_HOME)
+    )
+    setup_parser.add_argument("--json", action="store_true")
+    setup_parser.set_defaults(func=_cmd_setup)
+
+    new_parser = subparsers.add_parser(
+        "new", help="Create an independent Co-Math project"
+    )
+    new_parser.add_argument("name")
+    new_parser.add_argument("--projects-home")
+    new_parser.add_argument("--no-git", action="store_true")
+    new_parser.add_argument("--json", action="store_true")
+    new_parser.set_defaults(func=_cmd_new_project)
+
+    list_parser = subparsers.add_parser("list", help="List Co-Math projects")
+    list_parser.add_argument("--projects-home")
+    list_parser.add_argument("--json", action="store_true")
+    list_parser.set_defaults(func=_cmd_list_projects)
+
+    status_parser = subparsers.add_parser(
+        "status", help="Show the current project state"
+    )
+    _add_project_target(status_parser)
+    status_parser.add_argument("--json", action="store_true")
+    status_parser.set_defaults(func=_cmd_project_status)
+
+    resume_parser = subparsers.add_parser(
+        "resume", help="Summarize a project before continuing"
+    )
+    _add_project_target(resume_parser)
+    resume_parser.add_argument("--json", action="store_true")
+    resume_parser.set_defaults(func=_cmd_project_resume)
+
+    next_parser = subparsers.add_parser(
+        "next", help="Show one useful next project action"
+    )
+    _add_project_target(next_parser)
+    next_parser.add_argument("--json", action="store_true")
+    next_parser.set_defaults(func=_cmd_project_next)
+
+    archive_parser = subparsers.add_parser(
+        "archive", help="Archive a project without deleting its files"
+    )
+    _add_project_target(archive_parser)
+    archive_parser.add_argument("--json", action="store_true")
+    archive_parser.set_defaults(func=_cmd_project_archive)
+
+    reopen_parser = subparsers.add_parser(
+        "reopen", help="Reopen an archived project"
+    )
+    _add_project_target(reopen_parser)
+    reopen_parser.add_argument("--json", action="store_true")
+    reopen_parser.set_defaults(func=_cmd_project_reopen)
 
     init_parser = subparsers.add_parser("init", help="Initialize workspace scaffold")
     init_parser.add_argument("--workspace", default="workspace")
@@ -108,6 +178,115 @@ def build_parser() -> argparse.ArgumentParser:
     handoff_parser.set_defaults(func=_cmd_skill_handoff)
 
     return parser
+
+
+def _cmd_setup(args: argparse.Namespace) -> int:
+    home = configure_projects_home(args.projects_home)
+    output = {"projects_home": str(home)}
+    if args.json:
+        _print_json(output)
+    else:
+        print(f"Co-Math projects directory: {home}")
+    return 0
+
+
+def _cmd_new_project(args: argparse.Namespace) -> int:
+    project, git_initialized = create_project(
+        args.name,
+        projects_home_path=args.projects_home,
+        initialize_git=not args.no_git,
+    )
+    output = {
+        "name": project.name,
+        "path": str(project.root),
+        "workspace": str(project.workspace),
+        "git_initialized": git_initialized,
+        "next_action": "Open this directory in your coding agent.",
+    }
+    if args.json:
+        _print_json(output)
+    else:
+        print(f"Created Co-Math project: {project.name}")
+        print(f"Path: {project.root}")
+        if not args.no_git and not git_initialized:
+            print("Git was not initialized; run git init in the project if needed.")
+        print("Next: Open this directory in your coding agent.")
+    return 0
+
+
+def _cmd_list_projects(args: argparse.Namespace) -> int:
+    home = get_projects_home(args.projects_home)
+    found = list_projects(args.projects_home)
+    output = [
+        {
+            "name": project.name,
+            "path": str(project.root),
+            "workspace": str(project.workspace),
+            **project_summary(project),
+        }
+        for project in found
+    ]
+    if args.json:
+        _print_json(output)
+    elif not output:
+        print(f"No Co-Math projects found under {home}.")
+    else:
+        for item in output:
+            print(f"{item['name']}: {item['path']}")
+            print(f"  {item['current']}")
+            print(f"  Next: {item['next_action']}")
+    return 0
+
+
+def _cmd_project_status(args: argparse.Namespace) -> int:
+    summary = project_summary(_project_from_args(args))
+    if args.json:
+        _print_json(summary)
+    else:
+        print(render_resume(summary))
+    return 1 if summary["status"] == "invalid" else 0
+
+
+def _cmd_project_resume(args: argparse.Namespace) -> int:
+    summary = project_summary(_project_from_args(args))
+    if args.json:
+        _print_json(summary)
+    else:
+        print(render_resume(summary))
+    return 1 if summary["status"] == "invalid" else 0
+
+
+def _cmd_project_next(args: argparse.Namespace) -> int:
+    summary = project_summary(_project_from_args(args))
+    if args.json:
+        _print_json(summary)
+    else:
+        print(render_next(summary))
+    return 1 if summary["status"] == "invalid" else 0
+
+
+def _cmd_project_archive(args: argparse.Namespace) -> int:
+    project = _project_from_args(args)
+    archive_project(project)
+    summary = project_summary(project)
+    if args.json:
+        _print_json(summary)
+    else:
+        print(f"Archived Co-Math project: {project.name}")
+        print(f"Path: {project.root}")
+    return 0
+
+
+def _cmd_project_reopen(args: argparse.Namespace) -> int:
+    project = _project_from_args(args)
+    reopen_project(project)
+    summary = project_summary(project)
+    if args.json:
+        _print_json(summary)
+    else:
+        print(f"Reopened Co-Math project: {project.name}")
+        print(render_next(summary))
+    return 0
 
 
 def _cmd_init(args: argparse.Namespace) -> int:
@@ -226,6 +405,21 @@ def _cmd_skill_handoff(args: argparse.Namespace) -> int:
         f"{Path(args.workspace) / 'project' / 'skill_handoffs.jsonl'}"
     )
     return 0
+
+
+def _add_project_target(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--project",
+        help="Project directory; defaults to discovery from the current directory",
+    )
+
+
+def _project_from_args(args: argparse.Namespace) -> Project:
+    return resolve_project(getattr(args, "project", None))
+
+
+def _print_json(value: object) -> None:
+    print(json.dumps(value, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":
