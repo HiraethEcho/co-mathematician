@@ -3,9 +3,9 @@
 ## Goal
 
 Keep Co-Math installed once while each mathematical project lives in its own
-long-lived directory and optional Git repository. OpenCode GUI users should be
-able to create, find, continue, archive, and reopen projects without learning
-the internal workspace states.
+long-lived directory and optional Git repository. Users of repository-aware
+coding agents should be able to create, find, continue, archive, and reopen
+projects without learning the internal workspace states.
 
 ## Scope
 
@@ -14,11 +14,14 @@ the internal workspace states.
   `workspace/` files in each project.
 - Discover projects by scanning the configured projects directory instead of
   maintaining a separate project registry.
-- Install one global OpenCode Skill, one project-management tool, a runner, and
-  a small local configuration file.
+- Put one canonical project Skill at
+  `.agents/skills/co-mathematician/SKILL.md` in every created project.
+- Use a short `AGENTS.md` as the coding-agent-neutral entry point. Keep only a
+  short `CLAUDE.md` pointer for agents that do not read `.agents/skills` or
+  `AGENTS.md` directly.
 - Show the research question, progress, first blocker, and one next action in
   plain language.
-- Document terminal and OpenCode GUI usage in English and Chinese.
+- Document terminal and coding-agent usage in English and Chinese.
 
 ## Boundaries
 
@@ -28,7 +31,7 @@ the internal workspace states.
 - Do not start research while creating a project.
 - Archiving only adds `workspace/project/ARCHIVED.md`; it never deletes research
   files.
-- OpenCode may only manage projects under the configured project roots.
+- Do not require an OpenCode, Codex, Claude Code, or Cursor-specific tool.
 
 ## Components
 
@@ -39,12 +42,10 @@ copying a second version of the harness.
 `context.py` reads existing project files and converts them into a short status
 and next action. It does not mutate research state.
 
-`opencode.py` installs fixed Co-Math files under the user's OpenCode directory.
-Reinstalling replaces only those fixed files; uninstalling removes only those
-fixed files.
-
-The OpenCode Skill chooses sensible defaults and keeps replies short. The single
-tool delegates all file-changing operations to the `co-math` command.
+The packaged canonical Skill describes both project lifecycle commands and the
+research workflow. Project creation copies that one Skill into `.agents/skills`
+and writes short agent entry files. Every coding agent delegates project state
+changes to the same `co-math` command.
 
 ## Repository Integration
 
@@ -60,10 +61,10 @@ no force push is allowed.
 
 - Import the Python modules and parse every new command.
 - Run read-only commands against the current configured project directory.
-- Compile the OpenCode TypeScript files.
-- Build the Python wheel and confirm it contains the Skill and OpenCode files.
+- Build the Python wheel and confirm it contains the canonical Skill.
+- Check a created project's `.agents/skills` and agent entry files.
 - Check both README command sequences against the actual CLI help.
 - Confirm both remote main heads and final repository trees after pushing.
 
-Real OpenCode GUI interaction remains a separate manual check unless OpenCode is
-available and configured during this work.
+Real coding-agent GUI interaction remains a separate manual check unless a
+configured client is available during this work.
