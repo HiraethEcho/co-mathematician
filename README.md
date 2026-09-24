@@ -67,6 +67,11 @@ working paper.
 
 ## Install And Create Projects
 
+The optional [local research workbench](docs/local-web.md) adds a browser UI for
+projects, mathematical documents, model conversations, and saving new research
+notes. It uses the same Python Core and project files. Model keys stay in process
+memory. Desktop packaging and independent-review UI are not included yet.
+
 Clone Co-Math Core and install its command:
 
 ```bash

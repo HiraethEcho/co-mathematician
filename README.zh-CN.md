@@ -63,6 +63,8 @@ workstreams、检查 gates、渲染 final working paper。
 
 ## 安装并创建项目
 
+新增可选的[本地研究工作台](docs/local-web.md)：在浏览器中打开项目、阅读数学文档、与模型讨论并保存新笔记。网页与 CLI 共用 Python Core 和项目文件；模型密钥只保存在进程内存。桌面打包和独立审稿界面尚未实现。实际运行情况见[源码与运行记录](docs/repo-audit.md)。
+
 clone Co-Math Core 并安装命令：
 
 ```bash
