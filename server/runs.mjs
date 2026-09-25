@@ -32,12 +32,18 @@ export class Runs {
       const main = `${project.workspace.split(/[\\/]/).at(-1)}/project/PROJECT.md`;
       const sources = [...new Set([main, ...input.files])];
       const documents = [];
-      let characters = 0;
-      for (const path of sources) {
+      const sourceNotes = [];
+      let materialBudget = 22000;
+      for (const [index, path] of sources.entries()) {
         const document = await this.core.call('file.read', { projectId, path });
-        characters += document.content.length;
-        if (characters > 22000) throw Object.assign(new Error('所选材料超过 22,000 个字符，请减少材料后发送。'), { status: 400 });
-        documents.push(document);
+        if (document.readable === false) throw Object.assign(new Error(`${path} 暂时没有可供模型阅读的文字，请先移除该材料或转换为文本。`), { status: 400 });
+        const allowance = Math.floor(materialBudget / (sources.length - index));
+        const excerpt = document.content.slice(0, allowance);
+        const shortened = document.content.length > allowance || document.truncated;
+        if (shortened) sourceNotes.push(`${path}：本次仅使用开头节选。`);
+        if (document.note) sourceNotes.push(`${path}：${document.note}`);
+        documents.push({ path, content: excerpt, ...(shortened ? { note: '这是文件开头的节选，不代表完整材料。' } : {}) });
+        materialBudget -= excerpt.length;
       }
       const conversation = await this.core.call('chat.read', { projectId });
       const history = [];
@@ -49,7 +55,7 @@ export class Runs {
         remaining -= message.content.length;
       }
       controller.signal.throwIfAborted();
-      entry.message = await this.core.call('chat.begin', { projectId, content: input.content, sources, model: selection.model.id, profileName: selection.profileName, provider: selection.provider });
+      entry.message = await this.core.call('chat.begin', { projectId, content: input.content, sources, sourceNotes, model: selection.model.id, profileName: selection.profileName, provider: selection.provider });
       entry.completion = this.execute(projectId, entry, { selection, question: input.content, documents, history });
       return entry.message;
     } catch (error) { this.active.delete(projectId); throw error; }

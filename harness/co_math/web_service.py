@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import base64
 import os
 import tempfile
 from datetime import datetime, timezone
@@ -11,10 +12,10 @@ from uuid import uuid4
 from .context import project_summary
 from .project import config_home, create_project, projects_home, read_project
 from .workspace import load_goals, save_goals
+from .materials import MATERIAL_SUFFIXES, MAX_FILE_BYTES, import_material, read_material
 
 
 MAX_TEXT = 200_000
-TEXT_SUFFIXES = {".md", ".txt", ".tex", ".yaml", ".yml", ".json", ".py", ".lean", ".csv"}
 
 
 def now():
@@ -133,7 +134,7 @@ class WebService:
     def allowed_file(self, project, relative):
         parts = PurePosixPath(relative).parts
         allowed = parts and (parts[0] == project.workspace.name or relative in {"AGENTS.md", "CLAUDE.md"} or parts[:2] == (".agents", "skills"))
-        if not allowed or any(p.startswith(".") for p in parts[1:]) or Path(relative).suffix.lower() not in TEXT_SUFFIXES:
+        if not allowed or any(p.startswith(".") for p in parts[1:]) or Path(relative).suffix.lower() not in MATERIAL_SUFFIXES:
             raise ValueError("此文件不在可阅读的研究材料范围内")
         return checked_path(project.root, relative)
 
@@ -195,10 +196,10 @@ class WebService:
                     folders[:] = [f for f in sorted(folders) if not f.startswith(".") and not (Path(directory) / f).is_symlink()]
                     for filename in sorted(files):
                         path = Path(directory) / filename
-                        if path.is_symlink() or path.suffix.lower() not in TEXT_SUFFIXES or filename.startswith("."):
+                        if path.is_symlink() or path.suffix.lower() not in MATERIAL_SUFFIXES or filename.startswith("."):
                             continue
                         item = {"path": path.relative_to(project.root).as_posix(), "size": path.stat().st_size}
-                        if path.suffix.lower() == ".md" and path.parent.name == "notes":
+                        if path.suffix.lower() == ".md" and path.parent.name in {"notes", "materials"}:
                             try:
                                 with path.open(encoding="utf-8") as handle:
                                     heading = handle.readline(300).strip()
@@ -213,9 +214,18 @@ class WebService:
         if method == "file.read":
             relative = text(params.get("path"), "文件路径", 4000)
             path = self.allowed_file(project, relative)
-            if not path.is_file() or path.stat().st_size > MAX_TEXT:
-                raise ValueError("文件不存在或超过 200 KB，请用外部编辑器打开")
-            return {"path": relative, "content": path.read_text(encoding="utf-8")}
+            return {"path": relative, **read_material(path)}
+        if method == "material.import":
+            directory = checked_path(project.root, f"{project.workspace.name}/project/materials", create_parents=True)
+            directory.mkdir(exist_ok=True, mode=0o700)
+            path = import_material(directory, params.get("name"), params.get("data"))
+            return {"path": path.relative_to(project.root).as_posix(), "name": path.name, "size": path.stat().st_size}
+        if method == "file.download":
+            relative = text(params.get("path"), "材料路径", 4000)
+            path = self.allowed_file(project, relative)
+            if not path.is_file() or path.stat().st_size > MAX_FILE_BYTES:
+                raise ValueError("文件不存在或超过 10 MB")
+            return {"name": path.name, "data": base64.b64encode(path.read_bytes()).decode("ascii")}
         if method == "note.create":
             title = text(params.get("title"), "笔记标题", 200).replace("\n", " ")
             content = text(params.get("content"), "笔记内容")
@@ -233,7 +243,7 @@ class WebService:
             if len(conversation["messages"]) >= 500:
                 raise ValueError("当前对话已达 500 条，请先在项目目录整理对话记录")
             position = len(conversation["messages"])
-            run = {"id": uuid4().hex, "order": position + 1, "role": "assistant", "content": "", "status": "running", "createdAt": now(), "model": params["model"], "profileName": params.get("profileName", ""), "provider": params.get("provider", ""), "sources": params.get("sources", [])}
+            run = {"id": uuid4().hex, "order": position + 1, "role": "assistant", "content": "", "status": "running", "createdAt": now(), "model": params["model"], "profileName": params.get("profileName", ""), "provider": params.get("provider", ""), "sources": params.get("sources", []), "sourceNotes": params.get("sourceNotes", [])}
             conversation["messages"].extend([
                 {"id": uuid4().hex, "order": position, "role": "user", "content": content, "createdAt": now()}, run,
             ])

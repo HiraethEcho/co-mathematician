@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 export class CoreBridge {
   constructor() {
     this.pending = new Map();
+    this.queue = [];
+    this.inFlight = null;
     this.sequence = 0;
     this.failed = null;
     const environment = Object.fromEntries(Object.entries(process.env).filter(([name]) =>
@@ -28,6 +30,8 @@ export class CoreBridge {
         this.pending.delete(message.id);
         if (message.error) pending.reject(Object.assign(new Error(message.error), { status: 400 }));
         else pending.resolve(message.result);
+        this.inFlight = null;
+        this.pump();
       } catch { this.fail('Python Core 返回了无法读取的数据。'); }
     });
   }
@@ -36,19 +40,29 @@ export class CoreBridge {
     this.failed = new Error(message);
     for (const item of this.pending.values()) { clearTimeout(item.timer); item.reject(this.failed); }
     this.pending.clear();
+    this.queue = []; this.inFlight = null;
   }
 
   call(method, params = {}) {
     if (this.failed) return Promise.reject(this.failed);
     return new Promise((resolve, reject) => {
       const id = ++this.sequence;
-      const timer = setTimeout(() => {
+      this.pending.set(id, { resolve, reject });
+      this.queue.push({ id, method, params });
+      this.pump();
+    });
+  }
+
+  pump() {
+    if (this.failed || this.inFlight !== null || !this.queue.length) return;
+    const request = this.queue.shift();
+    this.inFlight = request.id;
+    const pending = this.pending.get(request.id);
+    pending.timer = setTimeout(() => {
         this.fail('Python Core 响应超时，请重新打开项目核对实际状态。');
         this.process.kill();
       }, 30_000);
-      this.pending.set(id, { resolve, reject, timer });
-      this.process.stdin.write(JSON.stringify({ id, method, params }) + '\n');
-    });
+    this.process.stdin.write(JSON.stringify(request) + '\n');
   }
 
   close() { this.process.stdin.end(); this.process.kill(); }

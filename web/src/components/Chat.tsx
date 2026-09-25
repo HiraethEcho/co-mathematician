@@ -56,14 +56,14 @@ export function Chat({ messages, settings, files, busy, sending, switchingModel,
         {message.role === 'assistant' && message.model && <div className="message-model">{message.profileName ? `${message.profileName} · ` : ''}{message.model}</div>}
         {message.content ? <Markdown>{message.content}</Markdown> : message.status === 'running' ? <div className="thinking"><i/><i/><i/></div> : null}
         {message.error && <p role="status" className="error">{message.error}</p>}
-        {!!message.sources?.length && <details className="sources"><summary>使用了 {message.sources.length} 份项目材料</summary>{message.sources.map(path => <div key={path}>{path}</div>)}</details>}
+        {!!message.sources?.length && <details className="sources"><summary>使用了 {message.sources.length} 份项目材料{message.sourceNotes?.some(note => note.includes('节选')) ? ' · 含节选' : ''}</summary>{message.sources.map(path => <div key={path}>{path}</div>)}{message.sourceNotes?.map((note, index) => <p key={index}>{note}</p>)}</details>}
         {message.role === 'assistant' && message.content && message.status !== 'running' && <div className="message-actions"><button onClick={() => onSave(`模型：${message.profileName ? message.profileName + ' / ' : ''}${message.model || '未知'} · ${new Date(message.createdAt).toLocaleString()}\n\n状态：研究草稿，未经独立审稿或形式化验证。\n\n${message.content}`)}><BookmarkPlus size={14}/>保存为笔记</button><button aria-label="复制回答" onClick={async () => { try { await navigator.clipboard.writeText(message.content); setCopied(message.id); } catch { setCopied(''); } }}>{copied === message.id ? <Check size={14}/> : <Copy size={14}/>}</button></div>}
       </article>)}
     </div>
     <div className="composer-area">
       {!!files.length && <div className="attachments">{files.map(path => <span key={path} title={path}>{path.split('/').at(-1)}<button aria-label={`移除材料 ${path}`} onClick={() => onRemoveFile(path)}><X size={12}/></button></span>)}</div>}
       <div className="composer"><textarea aria-label="研究问题" placeholder={settings?.configured ? '提出问题，或继续这段推导…' : '先配置模型，即可围绕项目讨论…'} value={input} maxLength={20000} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void submit(); } }}/><div className="composer-footer"><span>⌘ / Ctrl + Enter 发送</span>{busy ? <button className="stop" onClick={onStop}><Square size={12} fill="currentColor"/>停止</button> : <button className="send" aria-label="发送问题" disabled={!input.trim() || sending || !settings?.configured} onClick={() => void submit()}><ArrowUp size={19}/></button>}</div></div>
-      <p className="context-note">发送项目概况、所选材料及最近对话给模型。<br/>模型回答需要核查，可保存为研究笔记。</p>
+      <p className="context-note">发送项目概况、所选材料及最近对话，长材料采用开头节选。<br/>模型回答需要核查，可保存为研究笔记。</p>
     </div>
   </aside>;
 }

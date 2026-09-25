@@ -12,7 +12,7 @@ def main():
     for line in sys.stdin:
         request_id = None
         try:
-            if len(line) > 1_000_000:
+            if len(line) > 15_000_000:
                 raise ValueError("请求过大")
             request = json.loads(line)
             request_id = request.get("id")
