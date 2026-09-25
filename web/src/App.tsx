@@ -4,6 +4,7 @@ import { api, mergeMessages, type Document, type Message, type ModelSettings, ty
 import { Markdown } from './components/Markdown';
 import { ProjectDialog, SettingsDialog, NoteDialog } from './components/Dialogs';
 import { Chat } from './components/Chat';
+import verymathLogo from './assets/verymath-logo.png?inline';
 
 export default function App() {
   const [projects, setProjects] = useState<Project[]>([]); const [home, setHome] = useState('');
@@ -81,7 +82,7 @@ export default function App() {
   }
   return <div className={'app ' + (sidebar ? '' : 'sidebar-hidden')}>
     <nav className="sidebar">
-      <a className="brand" href="#" onClick={e => { e.preventDefault(); setProjectId(''); }}><span className="brand-mark">∑</span><span>Co-Math<small>RESEARCH WORKSPACE</small></span></a>
+      <a className="brand" href="#" aria-label="VeryMath Co-Math 首页" onClick={e => { e.preventDefault(); setProjectId(''); }}><img className="brand-logo" src={verymathLogo} alt="VeryMath" width={960} height={286}/><span className="brand-caption">Co-Math · 研究工作台</span></a>
       <button className="new-project" onClick={() => setDialog('project')}><Plus size={17}/>新建 / 打开项目</button>
       <div className="sidebar-label">我的研究 <span>{projects.length.toString().padStart(2, '0')}</span></div>
       <div className="project-list">{projects.map(p => <button title={p.path} className={'project-item ' + (p.id === projectId ? 'active' : '')} key={p.id} onClick={() => setProjectId(p.id)}><FolderOpen size={16}/><span>{p.name}</span>{p.id === projectId && <span className="active-pin"/>}</button>)}{!projects.length && <p className="sidebar-hint">每个问题，都有自己的研究空间。</p>}</div>
