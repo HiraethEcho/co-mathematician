@@ -70,7 +70,7 @@ export default function App() {
     setSwitchingModel(true); setError('');
     try {
       const value = await api<ModelSettings>('/settings/select', { method: 'POST', body: { profileId, model } });
-      setSettings(value); setNotice(`后续提问使用：${value.profileName} / ${value.model || '尚未选择模型'}`);
+      setSettings(value);
     } catch (error) { setError((error as Error).message); }
     finally { setSwitchingModel(false); }
   }

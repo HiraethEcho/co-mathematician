@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { ArrowUp, Square, BookmarkPlus, Copy, MessageCircle, X, Check, Settings } from 'lucide-react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { ArrowUp, Square, BookmarkPlus, Copy, MessageCircle, X, Check, Settings, ChevronDown } from 'lucide-react';
 import type { Message, ModelSettings } from '../api';
 import { Markdown } from './Markdown';
 
@@ -11,16 +11,44 @@ export function Chat({ messages, settings, files, busy, sending, switchingModel,
   switchingModel: boolean; onSelectModel: (profileId: string, model?: string) => Promise<void>;
 }) {
   const [input, setInput] = useState(''); const [copied, setCopied] = useState('');
+  const [modelPickerOpen, setModelPickerOpen] = useState(false);
+  const picker = useRef<HTMLDivElement>(null); const pickerButton = useRef<HTMLButtonElement>(null);
+  const pickerId = useId();
   const scroll = useRef<HTMLDivElement>(null); const follow = useRef(true);
   useEffect(() => { if (follow.current && scroll.current) scroll.current.scrollTop = scroll.current.scrollHeight; }, [messages]);
+  useEffect(() => {
+    if (!modelPickerOpen) return;
+    function outside(event: PointerEvent) {
+      if (event.target instanceof Node && !picker.current?.contains(event.target)) setModelPickerOpen(false);
+    }
+    function escape(event: KeyboardEvent) {
+      if (event.key === 'Escape') { setModelPickerOpen(false); pickerButton.current?.focus(); }
+    }
+    document.addEventListener('pointerdown', outside);
+    document.addEventListener('keydown', escape);
+    return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', escape); };
+  }, [modelPickerOpen]);
+  function manageModels() { setModelPickerOpen(false); onSettings(); }
   async function submit() {
     if (!input.trim() || busy || sending) return;
     const submitted = input;
     try { await onSend(submitted); setInput(current => current === submitted ? '' : current); follow.current = true; } catch { /* Parent shows the error. */ }
   }
   return <aside className="chat-pane">
-    <header className="chat-header"><div><MessageCircle size={18}/><strong>研究对话</strong></div><span className={'connection-dot ' + (connected ? 'online' : '')} title={connected ? '已连接本地服务' : '正在连接本地服务'}/></header>
-    <div className="chat-model-controls"><div className="chat-service-row"><select aria-label="模型服务配置" value={settings?.activeProfileId || ''} disabled={switchingModel || !settings?.profiles.length} onChange={e => void onSelectModel(e.target.value)}>{!settings?.profiles.length && <option value="">尚无服务配置</option>}{settings?.profiles.map(profile => <option key={profile.id} value={profile.id}>{profile.name}{profile.configured ? '' : ' · 未填密钥'}</option>)}</select><button className="icon-button" aria-label="管理 API 配置" onClick={onSettings}><Settings size={16}/></button></div><select aria-label="当前模型" value={settings?.model || ''} disabled={switchingModel || !settings?.models.length} onChange={e => settings && void onSelectModel(settings.activeProfileId, e.target.value)}>{!settings?.model && <option value="">请先配置模型</option>}{settings?.models.map(model => <option key={model.id} value={model.id}>{model.id}</option>)}</select><span className="chat-key-status">{switchingModel ? '正在切换…' : settings?.configured ? '密钥已配置' : '请在设置中为此配置填写密钥'}</span></div>
+    <header className="chat-header">
+      <div className="chat-heading"><MessageCircle size={17}/><strong>研究对话</strong>{!connected && <span className="connection-dot" title="正在连接本地服务"/>}</div>
+      <div className="chat-header-tools" ref={picker} onBlur={event => { if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget)) setModelPickerOpen(false); }}>
+        <button ref={pickerButton} className={'chat-model-toggle ' + (modelPickerOpen ? 'open' : '')} aria-label="切换服务和模型" aria-expanded={modelPickerOpen} aria-controls={pickerId} title={`${settings?.profileName || '模型服务'} · ${settings?.model || '未选择模型'}`} onClick={() => setModelPickerOpen(open => !open)}>
+          <span>{switchingModel ? '切换中…' : settings?.model || '选择模型'}</span><ChevronDown size={13}/>
+        </button>
+        {modelPickerOpen && <div className="chat-model-popover" id={pickerId} role="group" aria-label="服务和模型选项">
+          <div className="model-popover-heading"><span>模型</span><button onClick={manageModels} aria-label="管理 API 配置"><Settings size={13}/>管理服务</button></div>
+          <label>服务<select aria-label="模型服务配置" value={settings?.activeProfileId || ''} disabled={switchingModel || !settings?.profiles.length} onChange={e => void onSelectModel(e.target.value)}>{!settings?.profiles.length && <option value="">尚无服务配置</option>}{settings?.profiles.map(profile => <option key={profile.id} value={profile.id}>{profile.name}{profile.configured ? '' : ' · 未填密钥'}</option>)}</select></label>
+          <label>模型<select aria-label="当前模型" value={settings?.model || ''} disabled={switchingModel || !settings?.models.length} onChange={e => { if (settings) { void onSelectModel(settings.activeProfileId, e.target.value); setModelPickerOpen(false); pickerButton.current?.focus(); } }}>{!settings?.model && <option value="">请先配置模型</option>}{settings?.models.map(model => <option key={model.id} value={model.id}>{model.id}</option>)}</select></label>
+          {!settings?.configured && <button className="model-key-prompt" onClick={manageModels}>填写 API 密钥</button>}
+        </div>}
+      </div>
+    </header>
     <div className="messages" ref={scroll} onScroll={() => { const e = scroll.current; if (e) follow.current = e.scrollHeight - e.scrollTop - e.clientHeight < 100; }}>
       {!messages.length && <div className="chat-empty"><span className="empty-symbol">∴</span><h3>从一个问题开始</h3><p>梳理假设，推导一个结论，<br/>或一起找出证明中缺少的一步。</p><button onClick={() => setInput('请根据项目问题，梳理已知条件、研究目标和下一步需要澄清的问题。')}>帮我梳理这个问题 <ArrowUp size={14}/></button><button onClick={() => setInput('请阅读所选材料，指出关键假设、推导中尚未说明的步骤，以及值得核查的边界情况。')}>检查材料中的推导 <ArrowUp size={14}/></button></div>}
       {messages.map(message => <article className={'message ' + message.role} key={message.id}>
