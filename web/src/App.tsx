@@ -39,6 +39,7 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('co-math-project', projectId);
     setFiles([]); setSelected([]); setMessages([]); setDocument(null); setError(''); setNotice('');
+    setMobilePane('document');
     setSelectedSkill(null);
     setOpeningFile(null);
     setDraggingMaterials(false); dragDepth.current = 0;
@@ -52,7 +53,7 @@ export default function App() {
       setFiles(data.files); setMessages(old => mergeMessages(old, conversation.messages));
       if (data.truncated) setNotice('项目材料较多，当前显示前 1,500 个文件。');
       const initial = data.files.find(f => f.path.endsWith('/project/PROJECT.md')) || data.files[0];
-      if (initial) void openFile(initial.path, projectId);
+      if (initial) void openFile(initial.path, projectId, false);
     }).catch(e => { if (!controller.signal.aborted) setError(e.message); }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     const events = new EventSource('/api' + prefix + '/events');
     events.onopen = () => {
@@ -64,10 +65,10 @@ export default function App() {
     events.onerror = () => { if (!controller.signal.aborted) setConnected(false); };
     return () => { controller.abort(); events.close(); };
   }, [projectId]);
-  async function openFile(path: string, id = projectId) {
+  async function openFile(path: string, id = projectId, showDocument = true) {
     const request = ++documentRequest.current;
     setOpeningFile(path);
-    try { const data = await api<Document>(`/projects/${id}/file?path=${encodeURIComponent(path)}`); if (request === documentRequest.current && currentProject.current === id) { setDocument(data); setPdfView('original'); setMobilePane('document'); } }
+    try { const data = await api<Document>(`/projects/${id}/file?path=${encodeURIComponent(path)}`); if (request === documentRequest.current && currentProject.current === id) { setDocument(data); setPdfView('original'); if (showDocument) setMobilePane('document'); } }
     catch (e) { if (request === documentRequest.current) setError((e as Error).message); }
     finally { if (request === documentRequest.current && currentProject.current === id) setOpeningFile(null); }
   }
