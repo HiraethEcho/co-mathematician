@@ -43,6 +43,10 @@ export function createApi(core, model, runs) {
       if (method === 'POST' && url.pathname === '/api/settings/models') {
         json(response, 200, await model.listModels(await body(request))); return true;
       }
+      if (method === 'POST' && url.pathname === '/api/skills/library') {
+        const input = await body(request);
+        json(response, 200, await core.call('skill.connect', { directory: input.directory })); return true;
+      }
       const profileMatch = url.pathname.match(/^\/api\/settings\/profiles\/([a-zA-Z0-9_-]{1,64})$/);
       if (method === 'DELETE' && profileMatch) {
         await body(request);
@@ -58,11 +62,13 @@ export function createApi(core, model, runs) {
       if (method === 'POST' && url.pathname === '/api/projects/open') {
         json(response, 200, await core.call('project.open', await body(request))); return true;
       }
-      const match = url.pathname.match(/^\/api\/projects\/([a-f0-9]{32})(?:\/(files|file|materials|download|preview|notes|chat|runs|events|cancel))?$/);
+      const match = url.pathname.match(/^\/api\/projects\/([a-f0-9]{32})(?:\/(files|file|materials|download|preview|notes|chat|runs|events|cancel|skills|skill))?$/);
       if (!match) { json(response, 404, { error: '接口不存在。' }); return true; }
       const [, projectId, action] = match;
       const params = { projectId };
       if (method === 'GET' && !action) json(response, 200, await core.call('project.read', params));
+      else if (method === 'GET' && action === 'skills') json(response, 200, await core.call('skill.list', params));
+      else if (method === 'GET' && action === 'skill') json(response, 200, await core.call('skill.read', { ...params, source: url.searchParams.get('source'), path: url.searchParams.get('path') }));
       else if (method === 'GET' && action === 'files') json(response, 200, await core.call('file.list', params));
       else if (method === 'GET' && action === 'file') json(response, 200, await core.call('file.read', { ...params, path: url.searchParams.get('path') }));
       else if (method === 'POST' && action === 'materials') {

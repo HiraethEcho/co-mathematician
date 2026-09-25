@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import yaml
 from pathlib import Path
 from typing import Any
 
@@ -101,7 +102,7 @@ def load_skill_registry(workspace: str | Path) -> dict[str, Any]:
 
 
 def _skill_entry(path: Path, repo_root: Path) -> dict[str, str]:
-    meta, title = _parse_skill(path.read_text(encoding="utf-8"))
+    meta, title = parse_skill(path.read_text(encoding="utf-8"))
     name = meta.get("name") or path.parent.name
     description = meta.get("description") or ""
     return {
@@ -113,7 +114,7 @@ def _skill_entry(path: Path, repo_root: Path) -> dict[str, str]:
     }
 
 
-def _parse_skill(text: str) -> tuple[dict[str, str], str]:
+def parse_skill(text: str) -> tuple[dict[str, str], str]:
     meta: dict[str, str] = {}
     body = text
     if text.startswith("---\n"):
@@ -121,11 +122,12 @@ def _parse_skill(text: str) -> tuple[dict[str, str], str]:
         if end != -1:
             frontmatter = text[4:end].strip()
             body = text[end + 4 :]
-            for line in frontmatter.splitlines():
-                if ":" not in line:
-                    continue
-                key, value = line.split(":", 1)
-                meta[key.strip()] = value.strip().strip("\"'")
+            try:
+                values = yaml.safe_load(frontmatter) or {}
+            except yaml.YAMLError as exc:
+                raise ValueError("Skill 头部格式无法读取") from exc
+            if isinstance(values, dict):
+                meta = {str(key): value for key, value in values.items() if isinstance(value, str)}
 
     title = ""
     for line in body.splitlines():

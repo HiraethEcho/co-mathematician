@@ -28,12 +28,18 @@ export class Runs {
     this.active.set(projectId, entry);
     try {
       const selection = await this.model.selected(input);
+      let skill = null;
+      if (input.skill) {
+        if (!['project', 'verymath'].includes(input.skill.source) || typeof input.skill.path !== 'string') throw Object.assign(new Error('请选择可用的 Skill。'), { status: 400 });
+        if (input.skill.source === 'verymath' && typeof input.skill.directory !== 'string') throw Object.assign(new Error('请重新选择 VeryMath Skill。'), { status: 400 });
+        skill = await this.core.call('skill.read', { projectId, source: input.skill.source, path: input.skill.path, directory: input.skill.directory });
+      }
       const project = await this.core.call('project.read', { projectId });
       const main = `${project.workspace.split(/[\\/]/).at(-1)}/project/PROJECT.md`;
       const sources = [...new Set([main, ...input.files])];
       const documents = [];
       const sourceNotes = [];
-      let materialBudget = 22000;
+      let materialBudget = skill ? 14000 : 22000;
       for (const [index, path] of sources.entries()) {
         const document = await this.core.call('file.read', { projectId, path });
         if (document.readable === false) throw Object.assign(new Error(`${path} 暂时没有可供模型阅读的文字，请先移除该材料或转换为文本。`), { status: 400 });
@@ -47,7 +53,7 @@ export class Runs {
       }
       const conversation = await this.core.call('chat.read', { projectId });
       const history = [];
-      let remaining = 12000;
+      let remaining = skill ? 6000 : 12000;
       for (const message of conversation.messages.slice(-12).reverse()) {
         if (message.role === 'assistant' && message.status !== 'succeeded') continue;
         if (message.content.length > remaining) break;
@@ -55,8 +61,9 @@ export class Runs {
         remaining -= message.content.length;
       }
       controller.signal.throwIfAborted();
-      entry.message = await this.core.call('chat.begin', { projectId, content: input.content, sources, sourceNotes, model: selection.model.id, profileName: selection.profileName, provider: selection.provider });
-      entry.completion = this.execute(projectId, entry, { selection, question: input.content, documents, history });
+      const skillInfo = skill ? { source: skill.source, path: skill.path, name: skill.name, title: skill.title, mode: skill.mode, resources: skill.resources.map(resource => resource.path), warnings: skill.warnings } : undefined;
+      entry.message = await this.core.call('chat.begin', { projectId, content: input.content, sources, sourceNotes, model: selection.model.id, profileName: selection.profileName, provider: selection.provider, skill: skillInfo });
+      entry.completion = this.execute(projectId, entry, { selection, question: input.content, documents, history, skill });
       return entry.message;
     } catch (error) { this.active.delete(projectId); throw error; }
   }

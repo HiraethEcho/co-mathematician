@@ -13,6 +13,7 @@ from .context import project_summary
 from .project import config_home, create_project, projects_home, read_project
 from .workspace import load_goals, save_goals
 from .materials import MATERIAL_SUFFIXES, MAX_FILE_BYTES, import_material, read_material
+from .skill_access import SkillAccess
 
 
 MAX_TEXT = 200_000
@@ -84,6 +85,7 @@ class WebService:
         self.registry = read_json(self.registry_file, {})
         if not isinstance(self.registry, dict):
             raise ValueError("网页项目列表格式错误")
+        self.skills = SkillAccess(self.config, read_json, write_json)
 
     def discover(self):
         errors = []
@@ -159,6 +161,8 @@ class WebService:
             return result
         if method == "project.list":
             return self.discover()
+        if method == "skill.connect":
+            return self.skills.connect(params.get("directory"))
         if method == "project.create":
             question = params.get("question", "")
             language = params.get("language", "中文")
@@ -183,6 +187,10 @@ class WebService:
         project = self.project(params.get("projectId"))
         if method == "project.read":
             return {"id": params["projectId"], **project_summary(project)}
+        if method == "skill.list":
+            return self.skills.list(project)
+        if method == "skill.read":
+            return self.skills.load(project, params.get("source"), params.get("path"), params.get("directory"))
         if method == "file.list":
             found = []
             for start in [project.workspace, project.root / ".agents" / "skills"]:
@@ -244,6 +252,8 @@ class WebService:
                 raise ValueError("当前对话已达 500 条，请先在项目目录整理对话记录")
             position = len(conversation["messages"])
             run = {"id": uuid4().hex, "order": position + 1, "role": "assistant", "content": "", "status": "running", "createdAt": now(), "model": params["model"], "profileName": params.get("profileName", ""), "provider": params.get("provider", ""), "sources": params.get("sources", []), "sourceNotes": params.get("sourceNotes", [])}
+            if params.get("skill"):
+                run["skill"] = params["skill"]
             conversation["messages"].extend([
                 {"id": uuid4().hex, "order": position, "role": "user", "content": content, "createdAt": now()}, run,
             ])

@@ -1,7 +1,10 @@
 export interface Project { id: string; name: string; path: string; workspace: string; status: string; question: string; blocker: string; }
 export interface ProjectFile { path: string; size: number; title?: string; }
 export interface Document { path: string; content: string; format?: 'markdown' | 'text'; readable?: boolean; truncated?: boolean; note?: string; pageCount?: number; }
-export interface Message { id: string; order: number; role: 'user' | 'assistant'; content: string; createdAt: string; status?: 'running' | 'succeeded' | 'failed' | 'cancelled' | 'interrupted'; model?: string; profileName?: string; provider?: string; sources?: string[]; sourceNotes?: string[]; error?: string; }
+export interface Skill { source: 'project' | 'verymath'; path: string; directory?: string; name: string; title: string; description?: string; group?: string; mode?: 'guidance'; resources?: string[]; warnings?: string[]; }
+export interface SkillDetail extends Omit<Skill, 'resources'> { instructions: string; resources: { path: string; content: string }[]; warnings: string[]; }
+export interface SkillCatalog { directory: string; skills: Skill[]; warnings: string[]; truncated: boolean; mode: 'guidance'; }
+export interface Message { id: string; order: number; role: 'user' | 'assistant'; content: string; createdAt: string; status?: 'running' | 'succeeded' | 'failed' | 'cancelled' | 'interrupted'; model?: string; profileName?: string; provider?: string; sources?: string[]; sourceNotes?: string[]; skill?: Skill; error?: string; }
 export interface ImportedMaterial { path: string; name: string; size: number; }
 export interface ModelOption { id: string; name: string; }
 export interface ModelProfile { id: string; name: string; provider: string; model: string; baseUrl: string; models: string[]; configured: boolean; }

@@ -1,11 +1,12 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { BookOpen, ChevronRight, FileText, FolderOpen, Plus, Settings, RefreshCw, PanelLeftClose, NotebookPen, X, ArrowUpRight, Check, Upload, Download } from 'lucide-react';
-import { api, mergeMessages, type Document, type Message, type ModelSettings, type Project, type ProjectFile, type ImportedMaterial } from './api';
+import { api, mergeMessages, type Document, type Message, type ModelSettings, type Project, type ProjectFile, type ImportedMaterial, type Skill } from './api';
 import { Markdown } from './components/Markdown';
 import { ProjectDialog, NoteDialog } from './components/Dialogs';
 import { SettingsDialog } from './components/SettingsDialog';
 import { Chat } from './components/Chat';
 import { MaterialsDialog } from './components/MaterialsDialog';
+import { SkillsDialog } from './components/SkillsDialog';
 import verymathLogo from './assets/verymath-logo.png?inline';
 
 const PdfPreview = lazy(() => import('./components/PdfPreview'));
@@ -18,7 +19,8 @@ export default function App() {
   const [pdfView, setPdfView] = useState<'original' | 'text'>('original');
   const [openingFile, setOpeningFile] = useState<string | null>(null);
   const [settings, setSettings] = useState<ModelSettings | null>(null); const [error, setError] = useState(''); const [notice, setNotice] = useState('');
-  const [dialog, setDialog] = useState<'project' | 'settings' | 'note' | 'materials' | null>(null); const [note, setNote] = useState('');
+  const [dialog, setDialog] = useState<'project' | 'settings' | 'note' | 'materials' | 'skills' | null>(null); const [note, setNote] = useState('');
+  const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
   const [initialMaterials, setInitialMaterials] = useState<File[]>([]);
   const [draggingMaterials, setDraggingMaterials] = useState(false); const dragDepth = useRef(0);
   const [sending, setSending] = useState(false); const [connected, setConnected] = useState(false); const [loading, setLoading] = useState(false);
@@ -37,6 +39,7 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('co-math-project', projectId);
     setFiles([]); setSelected([]); setMessages([]); setDocument(null); setError(''); setNotice('');
+    setSelectedSkill(null);
     setOpeningFile(null);
     setDraggingMaterials(false); dragDepth.current = 0;
     documentRequest.current++; setConnected(false);
@@ -71,7 +74,7 @@ export default function App() {
   async function send(content: string) {
     setSending(true); setError(''); const id = projectId;
     try {
-      await api(`/projects/${id}/runs`, { method: 'POST', body: { content, files: selected, profileId: settings?.activeProfileId, model: settings?.model, provider: settings?.provider, baseUrl: settings?.baseUrl } });
+      await api(`/projects/${id}/runs`, { method: 'POST', body: { content, files: selected, profileId: settings?.activeProfileId, model: settings?.model, provider: settings?.provider, baseUrl: settings?.baseUrl, skill: selectedSkill ? { source: selectedSkill.source, path: selectedSkill.path, directory: selectedSkill.directory } : undefined } });
       const conversation = await api<{ messages: Message[] }>(`/projects/${id}/chat`);
       if (currentProject.current === id) setMessages(old => mergeMessages(old, conversation.messages));
     } catch (e) { setError((e as Error).message); void api<ModelSettings>('/settings').then(setSettings).catch(() => {}); throw e; } finally { setSending(false); }
@@ -132,11 +135,12 @@ export default function App() {
         <div className="document-toolbar"><div><FileText size={16}/><span>{(openingFile || document?.path)?.split('/').at(-1) || '项目材料'}</span></div><div className="document-tools"><button className="text-button" onClick={() => addMaterials()}><Upload size={14}/>添加材料</button><button className="text-button" onClick={() => { setNote(''); setDialog('note'); }}><Plus size={15}/>写笔记</button></div></div>
         <div className="document-scroll">{openingFile ? <div className="document-empty" role="status"><BookOpen size={28}/><h3>正在打开材料…</h3></div> : document ? <><div className="document-heading"><span className="eyebrow">RESEARCH MATERIAL</span><button className={'attach-button ' + (selected.includes(document.path) ? 'attached' : '')} disabled={document.readable === false || (!selected.includes(document.path) && selected.length >= 6)} onClick={() => setSelected(old => old.includes(document.path) ? old.filter(p => p !== document.path) : [...old, document.path])}>{selected.includes(document.path) ? <Check size={14}/> : <Plus size={14}/>} {selected.includes(document.path) ? '已加入对话' : '结合此文档提问'}</button></div>{document.path.includes('/project/materials/') && <div className="material-original-actions">{/\.pdf$/i.test(document.path) && <div className="pdf-view-tabs"><button className={pdfView === 'original' ? 'selected' : ''} onClick={() => setPdfView('original')}>原文</button><button className={pdfView === 'text' ? 'selected' : ''} onClick={() => setPdfView('text')}>提取文字</button></div>}<a href={`/api/projects/${projectId}/download?path=${encodeURIComponent(document.path)}`} download><Download size={14}/>下载原文件</a></div>}{document.note && <p className="material-reading-note">{document.note}</p>}
           {/\.pdf$/i.test(document.path) && pdfView === 'original' ? <Suspense fallback={<p className="muted">正在打开 PDF…</p>}><PdfPreview url={`/api/projects/${projectId}/preview?path=${encodeURIComponent(document.path)}`}/></Suspense> : document.format === 'markdown' || /\.md$/i.test(document.path) ? <Markdown>{document.content}</Markdown> : /\.(pdf|docx|txt)$/i.test(document.path) ? <div className="extracted-document">{document.content || '暂无可显示的正文。'}</div> : <pre className="source-document">{document.content}</pre>}<footer className="document-end"><span>来自项目文件</span><code>{document.path}</code></footer></> : <div className="document-empty"><BookOpen size={28}/><h3>{loading ? '正在读取项目…' : '选择一份材料'}</h3><p>左侧列出了项目中的研究文档。</p></div>}</div>
-      </section><Chat key={projectId} messages={messages} settings={settings} files={selected} busy={busy} sending={sending || switchingModel} switchingModel={switchingModel} onSelectModel={selectModel} connected={connected} onSend={send} onStop={() => { void api(`/projects/${projectId}/cancel`, { method: 'POST', body: {} }).catch(e => setError(e.message)); }} onSave={content => { setNote(content); setDialog('note'); }} onRemoveFile={path => setSelected(old => old.filter(p => p !== path))} onSettings={() => setDialog('settings')}/></div></>}
+      </section><Chat key={projectId} selectedSkill={selectedSkill} onSkills={() => setDialog('skills')} onClearSkill={() => setSelectedSkill(null)} messages={messages} settings={settings} files={selected} busy={busy} sending={sending || switchingModel} switchingModel={switchingModel} onSelectModel={selectModel} connected={connected} onSend={send} onStop={() => { void api(`/projects/${projectId}/cancel`, { method: 'POST', body: {} }).catch(e => setError(e.message)); }} onSave={content => { setNote(content); setDialog('note'); }} onRemoveFile={path => setSelected(old => old.filter(p => p !== path))} onSettings={() => setDialog('settings')}/></div></>}
     </main>
     {dialog === 'project' && <ProjectDialog home={home} onClose={() => setDialog(null)} onCreated={p => { setProjects(old => [...old.filter(item => item.id !== p.id), p]); setProjectId(p.id); setDialog(null); }}/ >}
     {dialog === 'settings' && settings && <SettingsDialog settings={settings} onClose={() => setDialog(null)} onChanged={setSettings}/ >}
     {dialog === 'note' && project && <NoteDialog initial={note} onClose={() => setDialog(null)} onSave={saveNote}/ >}
     {dialog === 'materials' && project && <MaterialsDialog key={projectId} projectId={projectId} projectName={project.name} initialFiles={initialMaterials} onClose={() => setDialog(null)} onAdded={materialsAdded}/>}
+    {dialog === 'skills' && project && <SkillsDialog key={projectId} projectId={projectId} onLibraryChanged={() => setSelectedSkill(old => old?.source === 'verymath' ? null : old)} onClose={() => setDialog(null)} onUse={skill => { setSelectedSkill(skill); setDialog(null); setMobilePane('chat'); }}/ >}
   </div>;
 }
