@@ -1,8 +1,10 @@
 export interface Project { id: string; name: string; path: string; workspace: string; status: string; question: string; blocker: string; }
 export interface ProjectFile { path: string; size: number; title?: string; }
 export interface Document { path: string; content: string; }
-export interface Message { id: string; order: number; role: 'user' | 'assistant'; content: string; createdAt: string; status?: 'running' | 'succeeded' | 'failed' | 'cancelled' | 'interrupted'; model?: string; sources?: string[]; error?: string; }
-export interface ModelSettings { provider: string; model: string; baseUrl: string; configured: boolean; providers: string[]; models: { id: string; name: string }[]; }
+export interface Message { id: string; order: number; role: 'user' | 'assistant'; content: string; createdAt: string; status?: 'running' | 'succeeded' | 'failed' | 'cancelled' | 'interrupted'; model?: string; profileName?: string; provider?: string; sources?: string[]; error?: string; }
+export interface ModelOption { id: string; name: string; }
+export interface ModelProfile { id: string; name: string; provider: string; model: string; baseUrl: string; models: string[]; configured: boolean; }
+export interface ModelSettings { activeProfileId: string; profileName: string; profiles: ModelProfile[]; provider: string; model: string; baseUrl: string; configured: boolean; providers: string[]; models: ModelOption[]; savedProfileId?: string; }
 
 export async function api<T>(path: string, options: { method?: string; body?: unknown; signal?: AbortSignal } = {}): Promise<T> {
   const response = await fetch('/api' + path, {

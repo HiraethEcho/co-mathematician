@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { BookOpen, ChevronRight, FileText, FolderOpen, Plus, Settings, RefreshCw, PanelLeftClose, NotebookPen, X, ArrowUpRight, Check } from 'lucide-react';
 import { api, mergeMessages, type Document, type Message, type ModelSettings, type Project, type ProjectFile } from './api';
 import { Markdown } from './components/Markdown';
-import { ProjectDialog, SettingsDialog, NoteDialog } from './components/Dialogs';
+import { ProjectDialog, NoteDialog } from './components/Dialogs';
+import { SettingsDialog } from './components/SettingsDialog';
 import { Chat } from './components/Chat';
 import verymathLogo from './assets/verymath-logo.png?inline';
 
@@ -14,6 +15,7 @@ export default function App() {
   const [settings, setSettings] = useState<ModelSettings | null>(null); const [error, setError] = useState(''); const [notice, setNotice] = useState('');
   const [dialog, setDialog] = useState<'project' | 'settings' | 'note' | null>(null); const [note, setNote] = useState('');
   const [sending, setSending] = useState(false); const [connected, setConnected] = useState(false); const [loading, setLoading] = useState(false);
+  const [switchingModel, setSwitchingModel] = useState(false);
   const [sidebar, setSidebar] = useState(() => window.innerWidth >= 960); const [mobilePane, setMobilePane] = useState('document');
   const currentProject = useRef(projectId); currentProject.current = projectId;
   const documentRequest = useRef(0);
@@ -58,10 +60,19 @@ export default function App() {
   async function send(content: string) {
     setSending(true); setError(''); const id = projectId;
     try {
-      await api(`/projects/${id}/runs`, { method: 'POST', body: { content, files: selected } });
+      await api(`/projects/${id}/runs`, { method: 'POST', body: { content, files: selected, profileId: settings?.activeProfileId, model: settings?.model, provider: settings?.provider, baseUrl: settings?.baseUrl } });
       const conversation = await api<{ messages: Message[] }>(`/projects/${id}/chat`);
       if (currentProject.current === id) setMessages(old => mergeMessages(old, conversation.messages));
-    } catch (e) { setError((e as Error).message); throw e; } finally { setSending(false); }
+    } catch (e) { setError((e as Error).message); void api<ModelSettings>('/settings').then(setSettings).catch(() => {}); throw e; } finally { setSending(false); }
+  }
+  async function selectModel(profileId: string, model?: string) {
+    if (switchingModel) return;
+    setSwitchingModel(true); setError('');
+    try {
+      const value = await api<ModelSettings>('/settings/select', { method: 'POST', body: { profileId, model } });
+      setSettings(value); setNotice(`后续提问使用：${value.profileName} / ${value.model || '尚未选择模型'}`);
+    } catch (error) { setError((error as Error).message); }
+    finally { setSwitchingModel(false); }
   }
   async function saveNote(title: string, content: string) {
     const id = projectId;
@@ -96,10 +107,10 @@ export default function App() {
       {!project ? <section className="welcome"><div className="welcome-content"><span className="eyebrow">A PLACE FOR MATHEMATICAL THOUGHT</span><h1>让问题，<br/>一步步变得清楚。</h1><p>把想法、推导与未解决的问题留在同一个地方。<br/>与模型讨论，回到材料，继续你的研究。</p><button className="primary welcome-button" onClick={() => setDialog('project')}><Plus size={18}/>开启研究空间<ArrowUpRight size={18}/></button><div className="welcome-features"><div><BookOpen size={20}/><strong>读懂材料</strong><span>从项目文档出发</span></div><div><NotebookPen size={20}/><strong>留下思考</strong><span>笔记属于你的项目</span></div><div><RefreshCw size={20}/><strong>随时继续</strong><span>重新打开，接着研究</span></div></div></div><div className="math-decoration" aria-hidden="true"><span>∇f(x)</span><i>思考 · 推导 · 再检视</i><div>f(x) − f(x*) ≤ ε</div></div></section> : <><div className="mobile-tabs"><button className={mobilePane === 'document' ? 'active' : ''} onClick={() => setMobilePane('document')}>研究材料</button><button className={mobilePane === 'chat' ? 'active' : ''} onClick={() => setMobilePane('chat')}>模型对话</button></div><div className="workspace-columns"><section className="document-pane">
         <div className="document-toolbar"><div><FileText size={16}/><span>{document?.path.split('/').at(-1) || '项目材料'}</span></div><button className="text-button" onClick={() => { setNote(''); setDialog('note'); }}><Plus size={15}/>写笔记</button></div>
         <div className="document-scroll">{document ? <><div className="document-heading"><span className="eyebrow">RESEARCH MATERIAL</span><button className={'attach-button ' + (selected.includes(document.path) ? 'attached' : '')} disabled={!selected.includes(document.path) && selected.length >= 6} onClick={() => setSelected(old => old.includes(document.path) ? old.filter(p => p !== document.path) : [...old, document.path])}>{selected.includes(document.path) ? <Check size={14}/> : <Plus size={14}/>} {selected.includes(document.path) ? '已加入对话' : '结合此文档提问'}</button></div>{/\.(md|txt)$/i.test(document.path) ? <Markdown>{document.content}</Markdown> : <pre className="source-document">{document.content}</pre>}<footer className="document-end"><span>来自项目文件</span><code>{document.path}</code></footer></> : <div className="document-empty"><BookOpen size={28}/><h3>{loading ? '正在读取项目…' : '选择一份材料'}</h3><p>左侧列出了项目中的研究文档。</p></div>}</div>
-      </section><Chat key={projectId} messages={messages} settings={settings} files={selected} busy={busy} sending={sending} connected={connected} onSend={send} onStop={() => { void api(`/projects/${projectId}/cancel`, { method: 'POST', body: {} }).catch(e => setError(e.message)); }} onSave={content => { setNote(content); setDialog('note'); }} onRemoveFile={path => setSelected(old => old.filter(p => p !== path))} onSettings={() => setDialog('settings')}/></div></>}
+      </section><Chat key={projectId} messages={messages} settings={settings} files={selected} busy={busy} sending={sending || switchingModel} switchingModel={switchingModel} onSelectModel={selectModel} connected={connected} onSend={send} onStop={() => { void api(`/projects/${projectId}/cancel`, { method: 'POST', body: {} }).catch(e => setError(e.message)); }} onSave={content => { setNote(content); setDialog('note'); }} onRemoveFile={path => setSelected(old => old.filter(p => p !== path))} onSettings={() => setDialog('settings')}/></div></>}
     </main>
     {dialog === 'project' && <ProjectDialog home={home} onClose={() => setDialog(null)} onCreated={p => { setProjects(old => [...old.filter(item => item.id !== p.id), p]); setProjectId(p.id); setDialog(null); }}/ >}
-    {dialog === 'settings' && settings && <SettingsDialog settings={settings} onClose={() => setDialog(null)} onSaved={value => { setSettings(value); setDialog(null); setNotice('模型配置已保存，实际可用性以研究对话为准。'); }}/ >}
+    {dialog === 'settings' && settings && <SettingsDialog settings={settings} onClose={() => setDialog(null)} onChanged={setSettings}/ >}
     {dialog === 'note' && project && <NoteDialog initial={note} onClose={() => setDialog(null)} onSave={saveNote}/ >}
   </div>;
 }

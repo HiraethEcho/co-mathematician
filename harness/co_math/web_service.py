@@ -233,7 +233,7 @@ class WebService:
             if len(conversation["messages"]) >= 500:
                 raise ValueError("当前对话已达 500 条，请先在项目目录整理对话记录")
             position = len(conversation["messages"])
-            run = {"id": uuid4().hex, "order": position + 1, "role": "assistant", "content": "", "status": "running", "createdAt": now(), "model": params["model"], "sources": params.get("sources", [])}
+            run = {"id": uuid4().hex, "order": position + 1, "role": "assistant", "content": "", "status": "running", "createdAt": now(), "model": params["model"], "profileName": params.get("profileName", ""), "provider": params.get("provider", ""), "sources": params.get("sources", [])}
             conversation["messages"].extend([
                 {"id": uuid4().hex, "order": position, "role": "user", "content": content, "createdAt": now()}, run,
             ])

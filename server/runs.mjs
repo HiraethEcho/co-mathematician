@@ -23,11 +23,11 @@ export class Runs {
     if (typeof input.content !== 'string' || !input.content.trim() || input.content.length > 20000 || !Array.isArray(input.files) || input.files.length > 6 || input.files.some(f => typeof f !== 'string')) {
       throw Object.assign(new Error('问题不能为空，可附带最多六份材料。'), { status: 400 });
     }
-    const model = this.model.selected();
     const controller = new AbortController();
     const entry = { controller, message: null, completion: null };
     this.active.set(projectId, entry);
     try {
+      const selection = await this.model.selected(input);
       const project = await this.core.call('project.read', { projectId });
       const main = `${project.workspace.split(/[\\/]/).at(-1)}/project/PROJECT.md`;
       const sources = [...new Set([main, ...input.files])];
@@ -49,8 +49,8 @@ export class Runs {
         remaining -= message.content.length;
       }
       controller.signal.throwIfAborted();
-      entry.message = await this.core.call('chat.begin', { projectId, content: input.content, sources, model: model.id });
-      entry.completion = this.execute(projectId, entry, { model, question: input.content, documents, history });
+      entry.message = await this.core.call('chat.begin', { projectId, content: input.content, sources, model: selection.model.id, profileName: selection.profileName, provider: selection.provider });
+      entry.completion = this.execute(projectId, entry, { selection, question: input.content, documents, history });
       return entry.message;
     } catch (error) { this.active.delete(projectId); throw error; }
   }

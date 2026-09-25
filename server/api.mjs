@@ -37,6 +37,18 @@ export function createApi(core, model, runs) {
         } else json(response, 405, { error: '不支持的操作。' });
         return true;
       }
+      if (method === 'POST' && url.pathname === '/api/settings/select') {
+        json(response, 200, await model.select(await body(request))); return true;
+      }
+      if (method === 'POST' && url.pathname === '/api/settings/models') {
+        json(response, 200, await model.listModels(await body(request))); return true;
+      }
+      const profileMatch = url.pathname.match(/^\/api\/settings\/profiles\/([a-zA-Z0-9_-]{1,64})$/);
+      if (method === 'DELETE' && profileMatch) {
+        await body(request);
+        if (runs.active.size) throw Object.assign(new Error('请等待正在进行的回答结束，再删除配置。'), { status: 409 });
+        json(response, 200, await model.remove(profileMatch[1])); return true;
+      }
       if (url.pathname === '/api/projects') {
         if (method === 'GET') json(response, 200, await core.call('project.list'));
         else if (method === 'POST') json(response, 201, await core.call('project.create', await body(request)));
