@@ -1,12 +1,14 @@
 <div align="center">
 
+<img src="web/src/assets/verymath-logo.png" alt="VeryMath" width="280">
+
 # Co-Mathematician
 
-面向 coding agent 的仓库化数学研究工作区。
+把数学问题、研究材料、公式推导和模型对话放进同一个本地工作区。
 
-[English](README.md) · [安装](#安装并创建项目) · [第一次交互](#第一次交互) · [版本更新](#版本更新) · [架构](#工作区框架)
+[English](README.md) · [网页版快速开始](#网页版快速开始) · [功能与限制](#当前能力与限制) · [命令行用法](#安装并创建项目) · [版本更新](#版本更新)
 
-![version](https://img.shields.io/badge/version-0.2.0-blue)
+![version](https://img.shields.io/badge/version-0.3.0-blue)
 ![workspace](https://img.shields.io/badge/workspace-research-2ea44f)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
@@ -17,38 +19,125 @@
   <a href="https://github.com/VeryMath/co-mathematician"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/VeryMath/co-mathematician?style=social"></a>
 </p>
 
-<p align="center">
-  <img src="docs/co-mathematician-architecture.png" alt="Co-Mathematician 仓库架构" width="940">
-</p>
+Co-Mathematician 提供两种共用项目文件的使用方式：
 
-Co-Mathematician 是一个轻量级的数学研究工作区。`co-math` 命令安装一次后，每个
-数学项目都放在独立、可长期维护的目录和可选 Git 仓库中。Codex、Claude Code、
-Cursor、OpenCode 等能读取仓库的 coding agent 都使用同一套项目文件。
+| 使用方式 | 适合做什么 | 如何开始 |
+| --- | --- | --- |
+| **本地网页版** | 阅读材料、显示公式、与模型讨论、保存笔记 | 按下方步骤启动，在浏览器中操作 |
+| **Coding agent + 命令行** | 让 Codex、Claude Code、Cursor、OpenCode 等继续研究，组织计算、证明和独立审查 | 用 coding agent 打开项目目录，见[命令行用法](#安装并创建项目) |
 
-核心公式是：
+每个数学项目有独立的文件夹，可以长期保存，并继续交给其他工具使用。网页对话不会自动把研究目标标记为完成。
 
-```text
-coding agent + repo filesystem + gates + reviewer loop = research workspace
+本项目受 Google DeepMind [AI Co-Mathematician 论文](https://arxiv.org/abs/2605.06651)中的公开设计原则启发，**不是对其系统的复现**。
+
+## 网页版快速开始
+
+需要 **Python 3.10+**、**Node.js 22.19+** 和 Git。下面的 `python3` 必须对应满足版本要求的 Python。当前实际运行与界面检查在 macOS 上完成；Windows、Linux 尚未完整验证。
+
+### 1. 安装并启动
+
+macOS / Linux 终端：
+
+```bash
+git clone https://github.com/VeryMath/co-mathematician.git
+cd co-mathematician
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e .
+npm install --package-lock=false
+co-math setup --projects-home "$HOME/Desktop/CoMathProjects"
+npm run build
+CO_MATH_PYTHON=python npm start
 ```
 
-本项目受 Google DeepMind
-[AI Co-Mathematician 论文](https://arxiv.org/abs/2605.06651)中的公开设计原则启发，
-但**不是**对其系统的复现。
+保持这个终端运行，打开 **[http://127.0.0.1:4175](http://127.0.0.1:4175)**。
 
-## 这个工作区能做什么
+上面的设置命令将**之后新建的项目**放在桌面的 `CoMathProjects` 文件夹。可以换成自己喜欢的位置；未设置时程序默认使用 `~/CoMathProjects`。已有项目不会自动搬家。
 
-Co-Mathematician 会把一次数学研究对话变成一个文件化项目：
+Windows PowerShell 可使用以下命令安装和启动（尚未完整验证）：
 
-- coding agent 主线程扮演 Project Coordinator
-- `workspace/project/` 保存研究问题、目标、状态和消息
-- `workspace/workstreams/` 保存证明、计算、文献、审查等分支工作
-- reviewer agents 或独立 reviewer sessions 在完成前审查 report
-- `workspace/final/working_paper.md` 只从通过审查的 reports 渲染
+```powershell
+git clone https://github.com/VeryMath/co-mathematician.git
+cd co-mathematician
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e .
+npm install --package-lock=false
+.\.venv\Scripts\co-math.exe setup --projects-home "$HOME\Desktop\CoMathProjects"
+npm run build
+$env:CO_MATH_PYTHON = (Resolve-Path .\.venv\Scripts\python.exe).Path
+npm start
+```
 
-Python harness 不运行 agents。它只负责初始化文件、追加 messages、创建已批准
-workstreams、检查 gates、渲染 final working paper。
+后续启动：进入仓库、激活 Python 环境，再运行 `CO_MATH_PYTHON=python npm start`；源码更新后重新安装依赖并执行 `npm run build`。本版为从源码运行的本机服务，还没有一键安装包。
+
+### 2. 配置模型
+
+点击右上角设置，选择服务、填写 API Key、选择模型，然后“保存并使用”。
+
+- **华师大 ECNU**：服务地址已预填，填写自己的密钥并选择模型。
+- **其他兼容服务**：填写基础地址、密钥和模型名称；可以尝试“获取模型”，也可以手动填写。
+- 可保存多个服务配置，在对话栏顶部切换服务或模型；正在生成的回答继续使用发起时的配置。
+- 密钥仅保存在服务进程的内存里，重启后需要重新填写。非秘密配置会保存。也支持通过 `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL_ID` 提供默认配置，见[详细说明](docs/local-web.md)。
+
+**没有 API Key 也能创建项目、添加和阅读材料。** 当前实际模型请求验证覆盖 ECNU 的 `ecnu-max` 和 `ecnu-plus`；其他服务未逐一验证。
+
+### 3. 开始研究
+
+1. 点击“新建 / 打开项目”，填写名称与研究问题。已有项目可以从列表直接继续，也可以浏览文件夹，由程序自动识别。
+2. 点击“添加材料”，或把文件拖到工作区。可以一次添加多份材料，同名文件会另存。
+3. 打开材料，点击“结合此文档提问”，再在右侧输入问题。
+4. 有用的回答可以“保存为笔记”。刷新或重启后，项目、材料和已保存的对话仍可继续使用。
+5. 拖动两条竖向分隔线调整各栏宽度；双击恢复默认。窄窗口使用“研究材料 / 模型对话”页签。
+
+## 当前能力与限制
+
+| 功能 | 本版支持 |
+| --- | --- |
+| 项目 | 新建、浏览文件夹打开、继续已有研究；可读的研究目标页面 |
+| 材料 | PDF、Word（`.docx`）、Markdown、TXT、LaTeX、CSV、JSON/YAML、Python、Lean、BibTeX；每份最多 10 MB，每批最多 10 份 |
+| 公式 | Markdown、TXT、LaTeX、研究目标和对话的公式排版；Word 常见原生公式；“阅读 / 源文”切换 |
+| PDF | 原始页面阅读、翻页与文字提取；中文字符映射和标准字体随应用提供 |
+| 模型对话 | 多服务配置、模型切换、流式回答、停止生成、保存历史和研究笔记 |
+| VeryMath Skill | 连接本机 Skill 库，搜索并选择方法，把说明与支持的参考文字用于本轮对话 |
+| 界面 | VeryMath 品牌、可收起的模型选择、可拖动并记住宽度的分栏 |
+
+文本公式须使用 `$…$`、`$$…$$`、`\(...\)` 或 `\[…\]` 标记，例如 `梯度为 $\nabla f(x)$`。普通文字不会被猜测成公式。LaTeX 是公式预览，完整论文排版仍以编译后的 PDF 为准；不支持的公式会保留原式或提示对照原文件。**没有扫描文字或图片公式识别。**
+
+VeryMath Skill 当前提供**流程指导**：读取 `SKILL.md` 和支持的包内参考资料，让模型按其方法分析。选择 Skill 不会自动安装依赖，也不会执行命令、Lean、求解器或独立审稿。具体连接方式、容量与接口见 [Skill 接入说明](docs/skills-integration.md)。
+
+网页模型没有命令执行、任意文件写入或联网检索工具。数学回答属于草稿，仍需核查；保存回答不表示证明已验证。旧命令行的计算、工作分支和审查流程由外部 coding agent 驱动。Electron 桌面安装包和网页内的独立审稿界面尚未实现。
+
+## 项目与数据保存在哪里
+
+项目位置在新建界面可见。主要文件如下：
+
+```text
+你的项目/
+├── co-math.toml
+├── .agents/skills/                 # 项目自己的研究方法
+├── workspace/project/
+│   ├── PROJECT.md                  # 项目说明
+│   ├── GOALS.yaml                  # 研究问题和目标
+│   ├── materials/                  # 添加的原始材料
+│   └── notes/                      # 保存的研究笔记
+└── .co-math/web/conversation.json   # 网页对话历史
+```
+
+网页会为新建和已有项目补上 `.co-math/` 的 Git 忽略规则，避免日常提交带上对话。已经被手动加入 Git 跟踪的文件不受忽略规则影响。
+
+模型服务配置和已打开项目列表默认位于 `~/.config/co-math/`；密钥不写入这些文件。项目资料与聊天历史保存在本机，**点击发送后，项目概况、选中的材料文字和最近对话会发给你选择的模型服务**；使用 Skill 时也会发送相应方法说明。
+
+每轮最多选择六份材料，长材料使用开头节选。PDF 原文可以阅读全部页面，但文字提取最多读取前 40 页；模型读取的是提取文字，不是完整 PDF 页面图像。更详细的容量、存储位置和运行方式见[工作台使用说明](docs/local-web.md)。
 
 ## 版本更新
+
+### 0.3.0 (2026-09-26)
+
+- 新增本地研究工作台，支持创建项目、浏览文件夹和继续研究
+- 新增独立模型服务配置、模型切换、流式回答、停止与对话保存
+- 新增材料导入、PDF 原文阅读、公式预览与研究笔记保存
+- 新增本机 VeryMath Skill 流程指导、可读研究目标与可拖动分栏
+- 保留原有命令行和项目文件布局；具体能力与限制见上文
 
 ### 0.2.0 (2026-08-29)
 
@@ -63,7 +152,7 @@ workstreams、检查 gates、渲染 final working paper。
 
 ## 安装并创建项目
 
-新增可选的[本地研究工作台](docs/local-web.md)：在浏览器中打开项目、阅读数学文档、与模型讨论并保存新笔记。网页与 CLI 共用 Python Core 和项目文件；模型密钥只保存在进程内存。桌面打包和独立审稿界面尚未实现。实际运行情况见[源码与运行记录](docs/repo-audit.md)。
+以下保留原有 coding agent / 命令行用法。已完成上方网页快速开始的用户，无需重复安装 Python 命令。
 
 clone Co-Math Core 并安装命令：
 
@@ -317,6 +406,8 @@ failed explorations 和 reviewer status。
 
 ## 工作区框架
 
+下图描述由外部 coding agent 驱动的研究流程。网页版共用项目文件，但不会自动执行图中的 agent 或审稿步骤。
+
 ```mermaid
 flowchart TD
     User["人类数学研究者"] --> Coordinator["Coding agent 主线程<br/>Project Coordinator"]
@@ -411,8 +502,10 @@ workspace/
 ```bash
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python3 -m harness.co_math.cli --help
 python3 -m pip wheel --no-deps --no-build-isolation .
+npm run check
+npm run build
 ```
 
 ## 许可证
 
-MIT。见 `LICENSE`。
+MIT。见 `LICENSE`。品牌与 PDF 资源保留各自的原始许可证，见[第三方资源说明](docs/third-party-assets.md)。

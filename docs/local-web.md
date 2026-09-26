@@ -4,7 +4,7 @@
 
 ## 启动
 
-需要 Node.js 22.13 或更新版本，以及 Python 3.10 或更新版本。先用 Python 的 `--version` 确认版本，再安装当前项目及前端依赖：
+需要 Node.js 22.19 或更新版本，以及 Python 3.10 或更新版本。先用 Python 的 `--version` 确认版本，再安装当前项目及前端依赖：
 
 ```bash
 python -m pip install -e .
@@ -49,7 +49,7 @@ CO_MATH_PYTHON=python npm start
 - PDF 默认使用本地阅读器显示原始页面，可翻页和输入页码；也能切换到提取文字。Word 显示提取的正文，两者都保留下载原文件入口。上传不会立即将材料发给模型，只有选中并提问后才发送文本。
 - PDF 提取最多读取开头 40 页、预览最多 200,000 字符。部分字体编码、扫描页、公式或表格不能准确还原；界面说明这些限制，不把图像当成已读文字。当前没有 OCR，模型使用提取文字及其节选，不直接读取 PDF 页面图像。
 - 新笔记在 `workspace/project/notes/`，可由其他 coding agent 继续使用。
-- 网页对话在项目的 `.co-math/web/conversation.json`，整体更新保存当前内容与运行状态。首次访问已有项目时只新增这个应用目录，原材料不改写。
+- 网页对话在项目的 `.co-math/web/conversation.json`，整体更新保存当前内容与运行状态。首次访问已有项目时会准备这个应用目录，并为 `.co-math/` 补上 Git 忽略规则；原材料不改写。忽略规则不影响已手动加入 Git 跟踪的文件。
 - 已打开项目列表和非秘密模型设置在 Core 配置目录；新建项目仍沿用 Python Core 的布局。
 - `CO_MATH_CONFIG_HOME` 可指定配置目录；`CO_MATH_PROJECTS_HOME` 可为这次网页运行指定项目目录，不会更改原 CLI 全局配置。CLI 可用 `--projects-home` 指向同一位置。
 - 同一个配置目录仅运行一个服务实例，同一项目最多一个模型任务；同时最多三个项目请求。外部 agent 修改文件后点击“刷新材料”。

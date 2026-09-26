@@ -1,12 +1,14 @@
 <div align="center">
 
+<img src="web/src/assets/verymath-logo.png" alt="VeryMath" width="280">
+
 # Co-Mathematician
 
-A repository-backed mathematical research workspace for coding agents.
+A local workspace for mathematical questions, source materials, formulas, and model conversations.
 
-[中文说明](README.zh-CN.md) · [Setup](#install-and-create-projects) · [First interaction](#first-interaction) · [Updates](#version-updates) · [Architecture](#workspace-framework)
+[中文说明](README.zh-CN.md) · [Web Quick Start](#web-quick-start) · [Capabilities](#current-capabilities-and-limits) · [CLI Setup](#install-and-create-projects) · [Updates](#version-updates)
 
-![version](https://img.shields.io/badge/version-0.2.0-blue)
+![version](https://img.shields.io/badge/version-0.3.0-blue)
 ![workspace](https://img.shields.io/badge/workspace-research-2ea44f)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
@@ -17,41 +19,125 @@ A repository-backed mathematical research workspace for coding agents.
   <a href="https://github.com/VeryMath/co-mathematician"><img alt="GitHub stars" src="https://img.shields.io/github/stars/VeryMath/co-mathematician?style=social"></a>
 </p>
 
-<p align="center">
-  <img src="docs/co-mathematician-architecture.png" alt="Co-Mathematician repository architecture" width="940">
-</p>
+Co-Mathematician offers two ways to work with the same project files:
 
-Co-Mathematician is a lightweight research workspace for using a repository-aware
-coding agent as an AI co-mathematician. Install the `co-math` command once, then
-keep every mathematical project in its own long-lived directory and optional
-Git repository. Codex, Claude Code, Cursor, OpenCode, and similar tools all use
-the same project files.
+| Mode | Use it for | Start here |
+| --- | --- | --- |
+| **Local web workbench** | Reading materials, rendering formulas, discussing with a model, and saving notes | Follow the web quick start below |
+| **Coding agent + CLI** | Continuing research with Codex, Claude Code, Cursor, OpenCode, or another agent; coordinating computations, proofs, and independent review | Open the project directory in your agent; see [CLI setup](#install-and-create-projects) |
 
-The core formula is:
+Each mathematical project has its own long-lived directory and can be continued with other tools. A web conversation does not automatically mark research goals as complete.
 
-```text
-coding agent + repo filesystem + gates + reviewer loop = research workspace
+This project draws on public design principles from Google DeepMind's [AI Co-Mathematician paper](https://arxiv.org/abs/2605.06651). It is **not a reproduction of that system**.
+
+## Web Quick Start
+
+Requires **Python 3.10+**, **Node.js 22.19+**, and Git. In the commands below, `python3` must refer to a supported Python version. Actual runs and UI checks have been performed on macOS; Windows and Linux have not been fully verified.
+
+### 1. Install and start
+
+macOS / Linux terminal:
+
+```bash
+git clone https://github.com/VeryMath/co-mathematician.git
+cd co-mathematician
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e .
+npm install --package-lock=false
+co-math setup --projects-home "$HOME/Desktop/CoMathProjects"
+npm run build
+CO_MATH_PYTHON=python npm start
 ```
 
-This project is inspired by public design principles from Google DeepMind's
-[AI Co-Mathematician paper](https://arxiv.org/abs/2605.06651), but it is **not**
-a reproduction of their system.
+Leave the terminal running and open **[http://127.0.0.1:4175](http://127.0.0.1:4175)**.
 
-## What This Workspace Does
+The setup command places **new projects** in `CoMathProjects` on your desktop. You can choose another directory; without setup, the application defaults to `~/CoMathProjects`. Existing projects are not moved automatically.
 
-Co-Mathematician turns a math research conversation into a file-backed project:
+For Windows PowerShell, the equivalent commands are below (not fully verified):
 
-- the coding agent main thread acts as the Project Coordinator
-- `workspace/project/` stores the research question, goals, status, and messages
-- `workspace/workstreams/` stores proof, computation, literature, and review work
-- reviewer agents or separate reviewer sessions check reports before completion
-- `workspace/final/working_paper.md` is rendered only from reviewed reports
+```powershell
+git clone https://github.com/VeryMath/co-mathematician.git
+cd co-mathematician
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e .
+npm install --package-lock=false
+.\.venv\Scripts\co-math.exe setup --projects-home "$HOME\Desktop\CoMathProjects"
+npm run build
+$env:CO_MATH_PYTHON = (Resolve-Path .\.venv\Scripts\python.exe).Path
+npm start
+```
 
-The Python harness does not run agents. It only initializes files, appends
-messages, creates approved workstreams, checks gates, and renders the final
-working paper.
+For subsequent starts, enter the repository, activate the Python environment, and run `CO_MATH_PYTHON=python npm start`. Reinstall dependencies and run `npm run build` after updating the source. This release runs locally from source; a desktop installer is not included.
+
+### 2. Configure a model
+
+Open settings in the upper-right corner, choose a service, enter your API key, select a model, and save.
+
+- **ECNU** has its service address prefilled; supply your own key and choose a model.
+- For **other compatible services**, enter the base URL, key, and model ID. You can request the model list or enter it manually.
+- Keep multiple service profiles and switch services or models from the conversation header. A running reply retains the configuration captured when it started.
+- Keys stay in server process memory and must be entered again after a restart. Non-secret settings are saved. `LLM_API_KEY`, `LLM_BASE_URL`, and `LLM_MODEL_ID` can provide the default profile; see the [workbench guide](docs/local-web.md).
+
+**An API key is not needed to create projects or add and read materials.** Actual provider requests have been verified with ECNU `ecnu-max` and `ecnu-plus`; other services have not been individually verified.
+
+### 3. Start researching
+
+1. Create a project with a name and research question. To continue an existing project, click it in the saved list or browse to its folder; the application recognizes it automatically.
+2. Add materials using the file picker or drag files into the workspace. Multiple files are supported; duplicate names are saved separately.
+3. Open a material, add it to the conversation, and ask a question.
+4. Save useful replies as research notes. Projects, materials, and saved conversations remain available after refreshing or restarting.
+5. Drag the vertical dividers to resize the panels; double-click to restore defaults. Narrow windows use document and conversation tabs.
+
+## Current Capabilities and Limits
+
+| Feature | Available in this release |
+| --- | --- |
+| Projects | Create, browse folders, reopen existing research, and read structured research goals |
+| Materials | PDF, Word (`.docx`), Markdown, TXT, LaTeX, CSV, JSON/YAML, Python, Lean, and BibTeX; up to 10 MB per file and 10 files per batch |
+| Formulas | Math in Markdown, TXT, LaTeX, research goals, and conversations; common native Word equations; reading/source views |
+| PDF | Original pages, page navigation, and text extraction; bundled character maps and standard fonts |
+| Conversations | Multiple service profiles, model switching, streamed replies, cancellation, saved history, and notes |
+| VeryMath Skills | Connect a local Skill library, search methods, and use instructions and supported references in a conversation |
+| Interface | VeryMath branding, compact model selection, and resizable panels with remembered widths |
+
+Text formulas need `$…$`, `$$…$$`, `\(...\)`, or `\[…\]` delimiters, for example `The gradient is $\nabla f(x)$`. Ordinary prose is not guessed to be math. LaTeX support is a formula preview, not a full document compiler; use the compiled PDF for complete typesetting. Unsupported formulas keep their source or receive a notice to check the original. **OCR and image-equation recognition are not included.**
+
+VeryMath Skills currently provide **workflow guidance**: the application reads `SKILL.md` and supported references so the model can follow the method. Selecting a Skill does not install dependencies or execute commands, Lean, solvers, or independent reviewers. See [Skill integration](docs/skills-integration.md) for connection instructions, capacity limits, and interfaces.
+
+The web model has no command execution, arbitrary file-write, or web-search tools. Mathematical replies are drafts requiring review; saving one does not verify a proof. The original CLI research branches, computations, and reviews are driven by an external coding agent. Electron packaging and a web interface for independent review are not implemented.
+
+## Where Projects and Data Are Saved
+
+The new-project dialog shows the storage location. A project contains:
+
+```text
+your-project/
+├── co-math.toml
+├── .agents/skills/                 # Project-local research methods
+├── workspace/project/
+│   ├── PROJECT.md                  # Project overview
+│   ├── GOALS.yaml                  # Research question and goals
+│   ├── materials/                  # Imported original materials
+│   └── notes/                      # Saved research notes
+└── .co-math/web/conversation.json   # Web conversation history
+```
+
+The web workbench adds a Git ignore rule for `.co-math/` in both new and existing projects so ordinary commits exclude conversations. Ignore rules do not affect files that were already explicitly tracked by Git.
+
+Model settings and the opened-project list default to `~/.config/co-math/`; keys are not written there. Research files and conversation history are stored locally. **Sending a question transmits the project overview, selected material text, and recent conversation to your chosen model service**; selected Skill instructions are included as well.
+
+Each request can include up to six selected materials, with leading excerpts used for long files. The PDF reader can display every original page, but text extraction reads at most the first 40 pages. The model receives extracted text, not the full PDF page images. See the [workbench guide](docs/local-web.md) for detailed limits, data locations, and operation.
 
 ## Version Updates
+
+### 0.3.0 (2026-09-26)
+
+- added the local web workbench with project creation and folder browsing
+- added independent model-service profiles, model switching, streaming, cancellation, and saved conversations
+- added material imports, PDF original-page reading, formula previews, and saved research notes
+- added local VeryMath Skill guidance, readable research goals, and resizable panels
+- retained the existing CLI and project layout; see the capabilities and limits above
 
 ### 0.2.0 (2026-08-29)
 
@@ -67,10 +153,7 @@ working paper.
 
 ## Install And Create Projects
 
-The optional [local research workbench](docs/local-web.md) adds a browser UI for
-projects, mathematical documents, model conversations, and saving new research
-notes. It uses the same Python Core and project files. Model keys stay in process
-memory. Desktop packaging and independent-review UI are not included yet.
+The following section covers the original coding-agent/CLI workflow. If you followed the web quick start, the Python command is already installed.
 
 Clone Co-Math Core and install its command:
 
@@ -332,6 +415,8 @@ uncertainty, failed explorations, and reviewer status.
 
 ## Workspace Framework
 
+The diagram below describes the external coding-agent workflow. The web workbench shares its project files, but does not execute these agents or reviews.
+
 ```mermaid
 flowchart TD
     User["Human mathematician"] --> Coordinator["Coding agent main thread<br/>Project Coordinator"]
@@ -428,8 +513,10 @@ workspace/
 ```bash
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python3 -m harness.co_math.cli --help
 python3 -m pip wheel --no-deps --no-build-isolation .
+npm run check
+npm run build
 ```
 
 ## License
 
-MIT. See `LICENSE`.
+MIT. See `LICENSE`. Bundled brand and PDF assets retain their original licenses; see [third-party assets](docs/third-party-assets.md).
