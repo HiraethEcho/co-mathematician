@@ -165,6 +165,16 @@ class WebService:
         return read_project(self.registry[pid])
 
     def conversation_path(self, project):
+        ignore = checked_path(project.root, ".gitignore")
+        if ignore.exists() and (not ignore.is_file() or ignore.stat().st_size > 1_000_000):
+            raise ValueError("无法更新项目的 Git 忽略规则，请检查 .gitignore 文件。")
+        content = ignore.read_bytes() if ignore.exists() else b""
+        rules = [line.strip() for line in content.splitlines() if line.strip() and not line.lstrip().startswith(b"#")]
+        if not rules or rules[-1] not in {b".co-math/", b"/.co-math/"}:
+            with ignore.open("ab") as handle:
+                if content and not content.endswith(b"\n"):
+                    handle.write(b"\n")
+                handle.write(b"\n# Local web conversation history\n/.co-math/\n")
         return checked_path(project.root, ".co-math/web/conversation.json", create_parents=True)
 
     def conversation(self, project):
@@ -220,9 +230,7 @@ class WebService:
             goals["language_policy"].update(status="chosen", project_docs_language=language, notes_language=language, final_output_language=language)
             save_goals(project.workspace, goals)
             pid = self.register(project)
-            # Web conversation state is private application data, not research text.
-            with (project.root / ".gitignore").open("a", encoding="utf-8") as handle:
-                handle.write("\n.co-math/\n")
+            self.conversation_path(project)
             return {"id": pid, **project_summary(project)}
         if method == "project.open":
             path = text(params.get("path"), "项目目录", 4000)
