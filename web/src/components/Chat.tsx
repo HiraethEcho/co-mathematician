@@ -36,7 +36,7 @@ export function Chat({ messages, settings, files, busy, sending, switchingModel,
     const submitted = input;
     try { await onSend(submitted); setInput(current => current === submitted ? '' : current); follow.current = true; } catch { /* Parent shows the error. */ }
   }
-  return <aside className="chat-pane">
+  return <aside className="chat-pane" id="research-chat">
     <header className="chat-header">
       <div className="chat-heading"><MessageCircle size={17}/><strong>研究对话</strong>{!connected && <span className="connection-dot" title="正在连接本地服务"/>}</div>
       <div className="chat-header-tools" ref={picker} onBlur={event => { if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget)) setModelPickerOpen(false); }}>
