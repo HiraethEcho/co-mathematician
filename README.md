@@ -1,41 +1,35 @@
 <div align="center">
 
-<img src="web/src/assets/verymath-logo.png" alt="VeryMath" width="280">
+<img src="web/src/assets/verymath-logo.png" alt="VeryMath" width="220">
 
 # Co-Mathematician
 
 A local workspace for mathematical questions, source materials, formulas, and model conversations.
 
-[中文说明](README.zh-CN.md) · [Web Quick Start](#web-quick-start) · [Capabilities](#current-capabilities-and-limits) · [CLI Setup](#install-and-create-projects) · [Updates](#version-updates) · [Architecture](#workspace-framework)
+[中文说明](README.zh-CN.md) · [Quick Start](#web-quick-start) · [Architecture](#architecture) · [Full Guide](docs/local-web.md)
 
-![version](https://img.shields.io/badge/version-0.3.0-blue)
-![workspace](https://img.shields.io/badge/workspace-research-2ea44f)
-![license](https://img.shields.io/badge/license-MIT-green)
+![version](https://img.shields.io/badge/version-0.3.0-blue) [![GitHub stars](https://img.shields.io/github/stars/VeryMath/co-mathematician?style=flat)](https://github.com/VeryMath/co-mathematician) ![license](https://img.shields.io/badge/license-MIT-green)
 
 </div>
 
-<p align="center">
-  If this project helps your work, please consider giving the repository a Star.
-  <a href="https://github.com/VeryMath/co-mathematician"><img alt="GitHub stars" src="https://img.shields.io/github/stars/VeryMath/co-mathematician?style=social"></a>
-</p>
+Co-Mathematician keeps mathematical research in a lasting project. Read, discuss, and take notes in the browser, then continue computation, proofs, and review with a coding agent.
+
+<a id="architecture"></a>
 
 <p align="center">
   <img src="docs/co-mathematician-architecture.png" alt="Co-Mathematician repository architecture" width="940">
 </p>
 <p align="center">
-  The coding-agent research workflow. The web workbench shares the project files; agent execution and independent review remain with the external coding agent.
+  From problem clarification to independent review and research outputs. The web workbench shares the project files; external coding agents drive research execution.
 </p>
 
-Co-Mathematician offers two ways to work with the same project files:
+## Inside the Workbench
 
-| Mode | Use it for | Start here |
-| --- | --- | --- |
-| **Local web workbench** | Reading materials, rendering formulas, discussing with a model, and saving notes | Follow the web quick start below |
-| **Coding agent + CLI** | Continuing research with Codex, Claude Code, Cursor, OpenCode, or another agent; coordinating computations, proofs, and independent review | Open the project directory in your agent; see [CLI setup](#install-and-create-projects) |
+<p align="center">
+  <img src="docs/workbench-preview.jpg" alt="Co-Math workbench with project materials, mathematical notes, and a real model conversation" width="940">
+</p>
 
-Each mathematical project has its own long-lived directory and can be continued with other tools. A web conversation does not automatically mark research goals as complete.
-
-This project draws on public design principles from Google DeepMind's [AI Co-Mathematician paper](https://arxiv.org/abs/2605.06651). It is **not a reproduction of that system**.
+Read formulas, ask about selected materials, and save research notes. This screenshot uses an independent example project and an actual model reply. Drag either vertical divider to adjust the layout.
 
 ## Web Quick Start
 
@@ -61,6 +55,9 @@ Leave the terminal running and open **[http://127.0.0.1:4175](http://127.0.0.1:4
 
 The setup command places **new projects** in `CoMathProjects` on your desktop. You can choose another directory; without setup, the application defaults to `~/CoMathProjects`. Existing projects are not moved automatically.
 
+<details>
+<summary>Windows PowerShell installation</summary>
+
 For Windows PowerShell, the equivalent commands are below (not fully verified):
 
 ```powershell
@@ -75,7 +72,14 @@ $env:CO_MATH_PYTHON = (Resolve-Path .\.venv\Scripts\python.exe).Path
 npm start
 ```
 
+</details>
+
+<details>
+<summary>Restarting and updating</summary>
+
 For subsequent starts, enter the repository, activate the Python environment, and run `CO_MATH_PYTHON=python npm start`. Reinstall dependencies and run `npm run build` after updating the source. This release runs locally from source; a desktop installer is not included.
+
+</details>
 
 ### 2. Configure a model
 
@@ -138,6 +142,9 @@ Each request can include up to six selected materials, with leading excerpts use
 
 ## Version Updates
 
+<details>
+<summary>0.3.0 and earlier releases</summary>
+
 ### 0.3.0 (2026-09-26)
 
 - added the local web workbench with project creation and folder browsing
@@ -158,7 +165,12 @@ Each request can include up to six selected materials, with leading excerpts use
 - introduced the repository-backed research workspace, approved goals,
   workstreams, independent review, and final working-paper flow
 
+</details>
+
 ## Install And Create Projects
+
+<details>
+<summary>CLI installation, research workflow, and agent integrations</summary>
 
 The following section covers the original coding-agent/CLI workflow. If you followed the web quick start, the Python command is already installed.
 
@@ -515,6 +527,8 @@ CLAUDE.md
 workspace/
 ```
 
+</details>
+
 ## Source Checks
 
 ```bash
@@ -524,6 +538,8 @@ npm run check
 npm run build
 ```
 
-## License
+## Inspiration and License
+
+This project draws on public design principles from Google DeepMind's [AI Co-Mathematician paper](https://arxiv.org/abs/2605.06651). It is not a reproduction of that system.
 
 MIT. See `LICENSE`. Bundled brand and PDF assets retain their original licenses; see [third-party assets](docs/third-party-assets.md).

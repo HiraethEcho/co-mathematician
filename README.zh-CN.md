@@ -1,41 +1,35 @@
 <div align="center">
 
-<img src="web/src/assets/verymath-logo.png" alt="VeryMath" width="280">
+<img src="web/src/assets/verymath-logo.png" alt="VeryMath" width="220">
 
 # Co-Mathematician
 
 把数学问题、研究材料、公式推导和模型对话放进同一个本地工作区。
 
-[English](README.md) · [网页版快速开始](#网页版快速开始) · [功能与限制](#当前能力与限制) · [命令行用法](#安装并创建项目) · [版本更新](#版本更新) · [架构](#工作区框架)
+[English](README.md) · [快速开始](#网页版快速开始) · [架构](#architecture) · [完整使用说明](docs/local-web.md)
 
-![version](https://img.shields.io/badge/version-0.3.0-blue)
-![workspace](https://img.shields.io/badge/workspace-research-2ea44f)
-![license](https://img.shields.io/badge/license-MIT-green)
+![version](https://img.shields.io/badge/version-0.3.0-blue) [![GitHub stars](https://img.shields.io/github/stars/VeryMath/co-mathematician?style=flat)](https://github.com/VeryMath/co-mathematician) ![license](https://img.shields.io/badge/license-MIT-green)
 
 </div>
 
-<p align="center">
-  如果这个项目对你有帮助，欢迎为仓库点 Star。
-  <a href="https://github.com/VeryMath/co-mathematician"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/VeryMath/co-mathematician?style=social"></a>
-</p>
+Co-Mathematician 把数学研究保存为可持续的项目。可以在网页里读材料、讨论和写笔记，也可以用 coding agent 继续计算、证明与审查。
+
+<a id="architecture"></a>
 
 <p align="center">
   <img src="docs/co-mathematician-architecture.png" alt="Co-Mathematician 仓库架构" width="940">
 </p>
 <p align="center">
-  Coding agent 研究流程架构。网页版共用项目文件；研究执行与独立审查仍由外部 coding agent 完成。
+  从问题澄清到独立审查与研究成果。网页版共用项目文件，研究执行由外部 coding agent 驱动。
 </p>
 
-Co-Mathematician 提供两种共用项目文件的使用方式：
+## 工作台一览
 
-| 使用方式 | 适合做什么 | 如何开始 |
-| --- | --- | --- |
-| **本地网页版** | 阅读材料、显示公式、与模型讨论、保存笔记 | 按下方步骤启动，在浏览器中操作 |
-| **Coding agent + 命令行** | 让 Codex、Claude Code、Cursor、OpenCode 等继续研究，组织计算、证明和独立审查 | 用 coding agent 打开项目目录，见[命令行用法](#安装并创建项目) |
+<p align="center">
+  <img src="docs/workbench-preview.jpg" alt="Co-Math 工作台：左侧项目材料、中间公式笔记、右侧真实模型对话" width="940">
+</p>
 
-每个数学项目有独立的文件夹，可以长期保存，并继续交给其他工具使用。网页对话不会自动把研究目标标记为完成。
-
-本项目受 Google DeepMind [AI Co-Mathematician 论文](https://arxiv.org/abs/2605.06651)中的公开设计原则启发，**不是对其系统的复现**。
+阅读公式、结合材料提问、保存研究笔记。截图使用独立示例项目和真实模型回答；两条竖向分隔线均可拖动。
 
 ## 网页版快速开始
 
@@ -61,6 +55,9 @@ CO_MATH_PYTHON=python npm start
 
 上面的设置命令将**之后新建的项目**放在桌面的 `CoMathProjects` 文件夹。可以换成自己喜欢的位置；未设置时程序默认使用 `~/CoMathProjects`。已有项目不会自动搬家。
 
+<details>
+<summary>Windows PowerShell 安装方式</summary>
+
 Windows PowerShell 可使用以下命令安装和启动（尚未完整验证）：
 
 ```powershell
@@ -75,7 +72,14 @@ $env:CO_MATH_PYTHON = (Resolve-Path .\.venv\Scripts\python.exe).Path
 npm start
 ```
 
+</details>
+
+<details>
+<summary>再次启动与更新</summary>
+
 后续启动：进入仓库、激活 Python 环境，再运行 `CO_MATH_PYTHON=python npm start`；源码更新后重新安装依赖并执行 `npm run build`。本版为从源码运行的本机服务，还没有一键安装包。
+
+</details>
 
 ### 2. 配置模型
 
@@ -138,6 +142,9 @@ VeryMath Skill 当前提供**流程指导**：读取 `SKILL.md` 和支持的包�
 
 ## 版本更新
 
+<details>
+<summary>0.3.0 与历史更新</summary>
+
 ### 0.3.0 (2026-09-26)
 
 - 新增本地研究工作台，支持创建项目、浏览文件夹和继续研究
@@ -157,7 +164,12 @@ VeryMath Skill 当前提供**流程指导**：读取 `SKILL.md` 和支持的包�
 
 - 建立仓库化研究工作区、目标批准、workstream、独立审查和最终 working paper 流程
 
+</details>
+
 ## 安装并创建项目
+
+<details>
+<summary>展开命令行安装、研究流程与平台适配</summary>
 
 以下保留原有 coding agent / 命令行用法。已完成上方网页快速开始的用户，无需重复安装 Python 命令。
 
@@ -504,6 +516,8 @@ CLAUDE.md
 workspace/
 ```
 
+</details>
+
 ## 源码检查
 
 ```bash
@@ -513,6 +527,8 @@ npm run check
 npm run build
 ```
 
-## 许可证
+## 项目来源与许可证
+
+本项目受 Google DeepMind [AI Co-Mathematician 论文](https://arxiv.org/abs/2605.06651)中的公开设计原则启发，不是对其系统的复现。
 
 MIT。见 `LICENSE`。品牌与 PDF 资源保留各自的原始许可证，见[第三方资源说明](docs/third-party-assets.md)。
