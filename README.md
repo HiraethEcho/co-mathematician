@@ -6,7 +6,7 @@
 
 A local workspace for mathematical questions, source materials, formulas, and model conversations.
 
-[中文说明](README.zh-CN.md) · [Web Quick Start](#web-quick-start) · [Capabilities](#current-capabilities-and-limits) · [CLI Setup](#install-and-create-projects) · [Updates](#version-updates)
+[中文说明](README.zh-CN.md) · [Web Quick Start](#web-quick-start) · [Capabilities](#current-capabilities-and-limits) · [CLI Setup](#install-and-create-projects) · [Updates](#version-updates) · [Architecture](#workspace-framework)
 
 ![version](https://img.shields.io/badge/version-0.3.0-blue)
 ![workspace](https://img.shields.io/badge/workspace-research-2ea44f)
@@ -17,6 +17,13 @@ A local workspace for mathematical questions, source materials, formulas, and mo
 <p align="center">
   If this project helps your work, please consider giving the repository a Star.
   <a href="https://github.com/VeryMath/co-mathematician"><img alt="GitHub stars" src="https://img.shields.io/github/stars/VeryMath/co-mathematician?style=social"></a>
+</p>
+
+<p align="center">
+  <img src="docs/co-mathematician-architecture.png" alt="Co-Mathematician repository architecture" width="940">
+</p>
+<p align="center">
+  The coding-agent research workflow. The web workbench shares the project files; agent execution and independent review remain with the external coding agent.
 </p>
 
 Co-Mathematician offers two ways to work with the same project files:

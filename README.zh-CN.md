@@ -6,7 +6,7 @@
 
 把数学问题、研究材料、公式推导和模型对话放进同一个本地工作区。
 
-[English](README.md) · [网页版快速开始](#网页版快速开始) · [功能与限制](#当前能力与限制) · [命令行用法](#安装并创建项目) · [版本更新](#版本更新)
+[English](README.md) · [网页版快速开始](#网页版快速开始) · [功能与限制](#当前能力与限制) · [命令行用法](#安装并创建项目) · [版本更新](#版本更新) · [架构](#工作区框架)
 
 ![version](https://img.shields.io/badge/version-0.3.0-blue)
 ![workspace](https://img.shields.io/badge/workspace-research-2ea44f)
@@ -17,6 +17,13 @@
 <p align="center">
   如果这个项目对你有帮助，欢迎为仓库点 Star。
   <a href="https://github.com/VeryMath/co-mathematician"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/VeryMath/co-mathematician?style=social"></a>
+</p>
+
+<p align="center">
+  <img src="docs/co-mathematician-architecture.png" alt="Co-Mathematician 仓库架构" width="940">
+</p>
+<p align="center">
+  Coding agent 研究流程架构。网页版共用项目文件；研究执行与独立审查仍由外部 coding agent 完成。
 </p>
 
 Co-Mathematician 提供两种共用项目文件的使用方式：
