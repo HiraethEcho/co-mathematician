@@ -62,6 +62,9 @@ export function createApi(core, model, runs) {
       if (method === 'POST' && url.pathname === '/api/projects/open') {
         json(response, 200, await core.call('project.open', await body(request))); return true;
       }
+      if (method === 'GET' && url.pathname === '/api/project-folders') {
+        json(response, 200, await core.call('project.browse', { path: url.searchParams.get('path') })); return true;
+      }
       const match = url.pathname.match(/^\/api\/projects\/([a-f0-9]{32})(?:\/(files|file|materials|download|preview|notes|chat|runs|events|cancel|skills|skill))?$/);
       if (!match) { json(response, 404, { error: '接口不存在。' }); return true; }
       const [, projectId, action] = match;

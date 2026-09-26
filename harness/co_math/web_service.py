@@ -118,6 +118,47 @@ class WebService:
         write_json(self.registry_file, self.registry)
         return pid
 
+    def browse_projects(self, location):
+        shortcuts = [{"name": name, "path": str(path)} for name, path in [
+            ("项目位置", self.home), ("桌面", Path.home() / "Desktop"),
+            ("文稿", Path.home() / "Documents"), ("个人文件夹", Path.home()),
+        ] if path.is_dir() and not path.is_symlink()]
+        if location is None or location == "":
+            directory = Path(shortcuts[0]["path"])
+        else:
+            directory = Path(text(location, "文件夹路径", 4000).strip()).expanduser()
+        if not directory.is_absolute() or directory.is_symlink() or not directory.is_dir():
+            raise ValueError("找不到这个文件夹，请重新选择。")
+        directory = directory.resolve(strict=True)
+        folders = []
+        truncated = False
+        try:
+            with os.scandir(directory) as entries:
+                for index, entry in enumerate(entries):
+                    if index >= 10_000:
+                        truncated = True
+                        break
+                    if entry.name.startswith(".") or not entry.is_dir(follow_symlinks=False):
+                        continue
+                    if len(folders) >= 1000:
+                        truncated = True
+                        break
+                    folders.append({"name": entry.name, "path": entry.path})
+        except PermissionError as exc:
+            raise ValueError("暂时无法读取这个文件夹，请选择你有访问权限的位置。") from exc
+        project_name = ""
+        project_error = ""
+        if (directory / "co-math.toml").exists():
+            try:
+                project_name = read_project(directory).name
+            except (ValueError, OSError):
+                project_error = "检测到了研究项目，但项目文件不完整或无法读取。"
+        return {"path": str(directory), "name": directory.name or str(directory),
+                "parent": str(directory.parent) if directory.parent != directory else None,
+                "folders": sorted(folders, key=lambda folder: folder["name"].casefold()),
+                "shortcuts": shortcuts, "projectName": project_name, "projectError": project_error,
+                "truncated": truncated}
+
     def project(self, pid):
         if not isinstance(pid, str) or pid not in self.registry:
             raise ValueError("项目未打开，请先选择项目目录")
@@ -162,6 +203,8 @@ class WebService:
             return result
         if method == "project.list":
             return self.discover()
+        if method == "project.browse":
+            return self.browse_projects(params.get("path"))
         if method == "skill.connect":
             return self.skills.connect(params.get("directory"))
         if method == "project.create":
@@ -182,7 +225,11 @@ class WebService:
                 handle.write("\n.co-math/\n")
             return {"id": pid, **project_summary(project)}
         if method == "project.open":
-            project = read_project(text(params.get("path"), "项目目录", 4000))
+            path = text(params.get("path"), "项目目录", 4000)
+            try:
+                project = read_project(path)
+            except (ValueError, OSError) as exc:
+                raise ValueError("这个文件夹无法作为研究项目打开。请选择之前保存的项目；论文和笔记可以在项目内通过“添加材料”导入。") from exc
             return {"id": self.register(project), **project_summary(project)}
 
         project = self.project(params.get("projectId"))

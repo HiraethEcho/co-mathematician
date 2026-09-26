@@ -1,4 +1,5 @@
 export interface Project { id: string; name: string; path: string; workspace: string; status: string; question: string; blocker: string; }
+export interface ProjectFolders { path: string; name: string; parent: string | null; folders: { name: string; path: string }[]; shortcuts: { name: string; path: string }[]; projectName: string; projectError: string; truncated: boolean; }
 export interface ProjectFile { path: string; size: number; title?: string; internal?: boolean; }
 export interface GoalView { question: string; questionStatus: string; language: string; goals: { id: string; title: string; status: string; details: { label: string; content: string }[] }[]; }
 export interface Document { path: string; content: string; title?: string; format?: 'markdown' | 'text' | 'goals'; readable?: boolean; truncated?: boolean; note?: string; pageCount?: number; rawContent?: string; goalsView?: GoalView; }
