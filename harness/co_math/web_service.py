@@ -14,6 +14,7 @@ from .project import config_home, create_project, projects_home, read_project
 from .workspace import load_goals, save_goals
 from .materials import MATERIAL_SUFFIXES, MAX_FILE_BYTES, import_material, read_material
 from .skill_access import SkillAccess
+from .goal_view import goals_document
 
 
 MAX_TEXT = 200_000
@@ -207,6 +208,15 @@ class WebService:
                         if path.is_symlink() or path.suffix.lower() not in MATERIAL_SUFFIXES or filename.startswith("."):
                             continue
                         item = {"path": path.relative_to(project.root).as_posix(), "size": path.stat().st_size}
+                        if path.parent == project.workspace / "project":
+                            if filename == "GOALS.yaml":
+                                item["title"] = "研究目标"
+                            elif filename == "PROJECT.md":
+                                item["title"] = "项目说明"
+                            elif filename in {"PROJECT_STATUS.md", "SKILL_HANDOFFS.md", "SKILL_REGISTRY.md", "skill_registry.json"}:
+                                item["internal"] = True
+                        if item["path"].startswith(".agents/"):
+                            item["internal"] = True
                         if path.suffix.lower() == ".md" and path.parent.name in {"notes", "materials"}:
                             try:
                                 with path.open(encoding="utf-8") as handle:
@@ -222,6 +232,11 @@ class WebService:
         if method == "file.read":
             relative = text(params.get("path"), "文件路径", 4000)
             path = self.allowed_file(project, relative)
+            if path == project.workspace / "project" / "GOALS.yaml":
+                raw = read_material(path)
+                if raw.get("truncated"):
+                    return {"path": relative, "format": "goals", "title": "研究目标", "rawContent": raw["content"], "content": raw["content"], "readable": False, "note": "目标文件过长，无法完整展示。下方只保留原始内容节选，请在外部编辑器查看。"}
+                return {"path": relative, **goals_document(raw["content"])}
             return {"path": relative, **read_material(path)}
         if method == "material.import":
             directory = checked_path(project.root, f"{project.workspace.name}/project/materials", create_parents=True)

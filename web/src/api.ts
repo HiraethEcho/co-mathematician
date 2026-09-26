@@ -1,6 +1,7 @@
 export interface Project { id: string; name: string; path: string; workspace: string; status: string; question: string; blocker: string; }
-export interface ProjectFile { path: string; size: number; title?: string; }
-export interface Document { path: string; content: string; format?: 'markdown' | 'text'; readable?: boolean; truncated?: boolean; note?: string; pageCount?: number; }
+export interface ProjectFile { path: string; size: number; title?: string; internal?: boolean; }
+export interface GoalView { question: string; questionStatus: string; language: string; goals: { id: string; title: string; status: string; details: { label: string; content: string }[] }[]; }
+export interface Document { path: string; content: string; title?: string; format?: 'markdown' | 'text' | 'goals'; readable?: boolean; truncated?: boolean; note?: string; pageCount?: number; rawContent?: string; goalsView?: GoalView; }
 export interface Skill { source: 'project' | 'verymath'; path: string; directory?: string; name: string; title: string; description?: string; group?: string; mode?: 'guidance'; resources?: string[]; warnings?: string[]; }
 export interface SkillDetail extends Omit<Skill, 'resources'> { instructions: string; resources: { path: string; content: string }[]; warnings: string[]; }
 export interface SkillCatalog { directory: string; skills: Skill[]; warnings: string[]; truncated: boolean; mode: 'guidance'; }

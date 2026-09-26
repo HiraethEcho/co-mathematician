@@ -170,9 +170,9 @@ def read_yaml(path: str | Path) -> Any:
 def write_yaml(path: str | Path, data: dict[str, Any]) -> None:
     target = Path(path)
     if yaml is not None:
-        target.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+        target.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8")
         return
-    target.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    target.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 def _write_text_if_missing(path: Path, text: str) -> None:
