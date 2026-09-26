@@ -58,6 +58,7 @@ logs/
 tmp/
 temp/
 .cache/
+.local/
 
 # Local workspace review artifacts
 workspace/project/*_REVIEW.md

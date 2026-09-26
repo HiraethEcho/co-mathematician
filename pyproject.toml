@@ -4,11 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "co-mathematician-workspace"
-version = "0.2.0"
+version = "0.3.0"
 description = "Lightweight harness for a coding-agent-driven AI Co-Mathematician workspace."
 requires-python = ">=3.10"
 dependencies = [
   "PyYAML>=6.0",
+  "pypdf>=6.6.2,<7",
   "tomli>=2.0; python_version < '3.11'",
 ]
 
