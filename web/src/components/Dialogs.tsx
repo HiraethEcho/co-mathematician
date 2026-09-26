@@ -41,6 +41,7 @@ export function NoteDialog({ initial, onClose, onSave }: { initial: string; onCl
   return <Modal title="保存研究笔记" onClose={onClose}><form onSubmit={submit}>
     <label>标题<input autoFocus required value={title} onChange={e => setTitle(e.target.value)} maxLength={200}/></label>
     <label>Markdown 内容<textarea className="note-editor" required value={content} onChange={e => setContent(e.target.value)} rows={12} maxLength={200000}/></label>
+    <p className="form-help">公式可写为 $x^2$，独立一行的公式写为 $$x^2$$。</p>
     <p className="form-help">保存为项目 notes 目录中的新文件，保留原有研究材料。</p>
     {error && <p role="alert" className="error">{error}</p>}
     <footer className="dialog-footer"><button type="button" className="secondary" onClick={onClose}>取消</button><button disabled={busy} className="primary">{busy ? '正在保存…' : '保存笔记'}</button></footer>

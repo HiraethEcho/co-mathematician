@@ -9,6 +9,7 @@ import unicodedata
 import zipfile
 from pathlib import Path
 from xml.etree import ElementTree
+from .word_math import read_word_paragraph
 
 MAX_FILE_BYTES = 10 * 1024 * 1024
 MAX_PREVIEW_CHARACTERS = 200_000
@@ -123,21 +124,15 @@ def _extract_material(path: Path) -> dict:
                 root = ElementTree.fromstring(document.read(entry))
             ns = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
             paragraphs = []
+            warnings = set()
             for paragraph in root.iter(ns + "p"):
-                parts = []
-                for item in paragraph.iter():
-                    if item.tag.endswith("}t") and item.text:
-                        parts.append(item.text)
-                    elif item.tag in {ns + "br", ns + "cr"}:
-                        parts.append("\n")
-                    elif item.tag == ns + "tab":
-                        parts.append("\t")
-                if parts:
-                    paragraphs.append("".join(parts))
+                text = read_word_paragraph(paragraph, warnings)
+                if text:
+                    paragraphs.append(text)
             content = "\n\n".join(paragraphs)
             truncated = len(content) > MAX_PREVIEW_CHARACTERS
             return {"content": content[:MAX_PREVIEW_CHARACTERS], "format": "text", "readable": bool(content.strip()), "truncated": truncated,
-                    "note": "Word 正文提取结果；公式、图片和表格布局请对照原文件。" + (" 文档较长，仅显示开头部分。" if truncated else "") if content.strip() else "Word 原文件已保存，但未提取到正文文字。"}
+                    "note": "Word 正文与常见公式预览；完整排版请查看原文件。" + " ".join(sorted(warnings)) + (" 文档较长，仅显示开头部分。" if truncated else "") if content.strip() else "Word 原文件已保存，但未提取到正文文字。"}
         except (OSError, ValueError, KeyError, RuntimeError, NotImplementedError, zipfile.BadZipFile, ElementTree.ParseError):
             return {"content": "", "format": "text", "readable": False, "note": "Word 原文件已保存，但无法自动提取文字，请下载原文件查看。"}
     raise ValueError("不支持读取这种材料")

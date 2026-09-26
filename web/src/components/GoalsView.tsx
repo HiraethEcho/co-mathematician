@@ -1,6 +1,7 @@
 import { ListChecks } from 'lucide-react';
 import type { Document } from '../api';
 import { Markdown } from './Markdown';
+import { MathText } from './MathText';
 
 const labels: Record<string, string> = {
   onboarding: '讨论中', draft: '草稿', proposed: '待确认', approved: '已确认',
@@ -19,7 +20,7 @@ export function GoalsView({ document }: { document: Document }) {
         {view.question ? <Markdown>{view.question}</Markdown> : <p className="muted">暂未填写研究问题，可以先在对话中描述你的想法。</p>}
       </section>
       <section className="research-goals"><div className="goal-section-heading"><h2>具体目标</h2><span>{view.goals.length} 项</span></div>
-        {view.goals.length ? view.goals.map((goal, index) => <article className="research-goal" key={`${goal.id}-${index}`}><header><span className="goal-number">{String(index + 1).padStart(2, '0')}</span><h3>{goal.title}</h3><span className="goal-status">{statusLabel(goal.status) || '状态待说明'}</span></header>{goal.details.map((detail, position) => <div className="goal-detail" key={position}><h4>{detail.label}</h4><Markdown>{detail.content}</Markdown></div>)}</article>) :
+        {view.goals.length ? view.goals.map((goal, index) => <article className="research-goal" key={`${goal.id}-${index}`}><header><span className="goal-number">{String(index + 1).padStart(2, '0')}</span><h3><MathText inline>{goal.title}</MathText></h3><span className="goal-status">{statusLabel(goal.status) || '状态待说明'}</span></header>{goal.details.map((detail, position) => <div className="goal-detail" key={position}><h4>{detail.label}</h4><Markdown>{detail.content}</Markdown></div>)}</article>) :
           <div className="goals-empty"><ListChecks size={25}/><div><h3>还没有单独列出的目标</h3><p>可以先与研究助手讨论，再把想完成的结果整理为具体目标。</p></div></div>}
       </section>
     </>}
